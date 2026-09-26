@@ -1062,9 +1062,15 @@ class CompanionPanel(QWidget):
                 self._fade(widget, duration=280, delay=min(i * 18, 180))
 
     def hideEvent(self, event):
-        for effect, group, _, _ in self._fades.values():
+        # Tear the opacity effects down entirely instead of just resetting
+        # them: a hide→show cycle on X11 can remap the window with a stale
+        # mid-fade buffer, leaving the panel permanently ghosted. Removing
+        # the effects makes the next show render exactly like first launch.
+        for widget, (effect, group, _, _) in self._fades.items():
             group.stop()
-            effect.setOpacity(1.)
+            group.deleteLater()
+            widget.setGraphicsEffect(None)
+        self._fades.clear()
         self._ptt_released()
         self._reveal.stop()
         self._visible_text = self._response_text
