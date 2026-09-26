@@ -104,30 +104,41 @@ class AmbientListener:
         if self._stream is not None:
             return
         try:
-            self._stream = sd.InputStream(
-                samplerate=SAMPLE_RATE,
-                channels=1,
-                dtype="int16",
-                blocksize=FRAMES_PER_BLOCK,
-                callback=self._callback,
-                device=self._device,
-            )
-            self._stream_rate = SAMPLE_RATE
-        except Exception:
-            # Device doesn't support 16kHz directly — open at its native
-            # rate and resample every block to 16kHz for Whisper.
-            info = sd.query_devices(self._device, "input")
-            native_rate = int(info["default_samplerate"])
-            self._stream_rate = native_rate
-            self._stream = sd.InputStream(
-                samplerate=native_rate,
-                channels=1,
-                dtype="int16",
-                blocksize=int(native_rate * BLOCK_MS / 1000),
-                callback=self._callback,
-                device=self._device,
-            )
-        self._stream.start()
+            try:
+                self._stream = sd.InputStream(
+                    samplerate=SAMPLE_RATE,
+                    channels=1,
+                    dtype="int16",
+                    blocksize=FRAMES_PER_BLOCK,
+                    callback=self._callback,
+                    device=self._device,
+                )
+                self._stream_rate = SAMPLE_RATE
+            except Exception:
+                # Device doesn't support 16kHz directly — open at its native
+                # rate and resample every block to 16kHz for Whisper.
+                info = sd.query_devices(self._device, "input")
+                native_rate = int(info["default_samplerate"])
+                self._stream_rate = native_rate
+                self._stream = sd.InputStream(
+                    samplerate=native_rate,
+                    channels=1,
+                    dtype="int16",
+                    blocksize=int(native_rate * BLOCK_MS / 1000),
+                    callback=self._callback,
+                    device=self._device,
+                )
+            self._stream.start()
+        except Exception as e:
+            import logging
+            logging.getLogger("clicky.listener").warning("Microphone stream unavailable: %s", e)
+            if self._stream is not None:
+                try:
+                    self._stream.close()
+                except Exception:
+                    pass
+            self._stream = None
+            raise RuntimeError(f"Microphone unavailable: {e}") from e
 
     def stop(self):
         self._running = False
@@ -153,7 +164,11 @@ class AmbientListener:
         self._mode = Mode.RECORDING
         if not self._running:
             self._running = True
-        self._open_stream()
+        try:
+            self._open_stream()
+        except Exception:
+            self._mode = Mode.STANDBY
+            raise
 
     def stop_recording(self) -> bytes:
         """Return buffered PCM16 bytes and resume standby."""

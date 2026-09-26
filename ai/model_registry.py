@@ -46,9 +46,9 @@ _FALLBACKS: dict[str, list[dict]] = {
         {"id": "gpt-4-turbo",   "label": "GPT-4 Turbo",  "vision": True},
     ],
     "gemini": [
-        {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash", "vision": True},
+        {"id": "gemini-3.6-flash", "label": "Gemini 3.6 Flash", "vision": True},
         {"id": "gemini-2.5-pro",   "label": "Gemini 2.5 Pro",   "vision": True},
-        {"id": "gemini-2.0-flash", "label": "Gemini 2.0 Flash", "vision": True},
+        {"id": "gemini-flash-latest", "label": "Gemini Flash Latest", "vision": True},
     ],
 }
 

@@ -59,6 +59,7 @@ hidden = [
 # ── Heavy packages that ship non-Python assets (DLLs, JSON, voices).
 #    collect_all grabs submodules + data files + binaries + metadata.
 datas, binaries, hiddenimports = [], [], []
+datas.append(("assets/unicas-logo.png", "assets"))
 for pkg in (
     "faster_whisper",
     "ctranslate2",

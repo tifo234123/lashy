@@ -74,7 +74,7 @@ class TrayManager(QObject):
         self._tray = QSystemTrayIcon()
         self._tray.setIcon(self._icons["idle"])
         self._tray.setToolTip(
-            f"Clicky - AI Companion\nPress {cfg.hotkey} and just talk"
+            f"Lashy - AI Companion\nPress {cfg.hotkey} and just talk"
         )
         self._search_enabled = True
         # Mirrors the persisted mic mode — off by default, so Clicky only
@@ -166,7 +166,7 @@ class TrayManager(QObject):
 
         self._build_language_submenu(menu)
 
-        scope_label = "Instructions for Clicky…"
+        scope_label = "Instructions for Lashy…"
         scope_action = menu.addAction(scope_label)
         scope_action.triggered.connect(self._prompt_custom_instructions)
 
@@ -255,7 +255,7 @@ class TrayManager(QObject):
         wf_menu = menu.addMenu("Workflow Capture")
         wf_start = wf_menu.addAction("Start capturing my clicks")
         wf_start.triggered.connect(self.on_workflow_start)
-        wf_stop  = wf_menu.addAction("Stop + send to Clicky")
+        wf_stop  = wf_menu.addAction("Stop + send to Lashy")
         wf_stop.triggered.connect(self.on_workflow_stop)
 
         # ── Live collaboration ──
@@ -284,7 +284,7 @@ class TrayManager(QObject):
 
         menu.addSeparator()
 
-        quit_action = menu.addAction("Quit Clicky")
+        quit_action = menu.addAction("Exit Lashy")
         quit_action.triggered.connect(self.on_quit)
 
         self._tray.setContextMenu(menu)
@@ -302,7 +302,7 @@ class TrayManager(QObject):
 
     def _prompt_custom_instructions(self):
         dlg = QDialog(None)
-        dlg.setWindowTitle("Instructions for Clicky")
+        dlg.setWindowTitle("Instructions for Lashy")
         dlg.setMinimumSize(480, 380)
         dlg.setStyleSheet("""
             QDialog { background-color: #1e1e24; }
@@ -327,12 +327,12 @@ class TrayManager(QObject):
         layout.setContentsMargins(20, 20, 20, 16)
         layout.setSpacing(10)
 
-        title = QLabel("Instructions for Clicky")
+        title = QLabel("Instructions for Lashy")
         title.setStyleSheet("font-size: 15px; font-weight: 600; color: #ffffff;")
         layout.addWidget(title)
 
         subtitle = QLabel(
-            "Replaces Clicky's core behavior (name, rules, tone).\n"
+            "Replaces Lashy's core behavior (name, rules, tone).\n"
             "{{CONTEXT}} and {{TODAY}} are placeholders — best left in."
         )
         subtitle.setStyleSheet("color: #9a9aa4; font-size: 12px;")

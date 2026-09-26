@@ -65,7 +65,7 @@ def _query_dpi_scale() -> float:
         return 1.0
 
 
-def capture_all_screens(max_width: int = 1280) -> List[ScreenShot]:
+def capture_all_screens(max_width: int = 960) -> List[ScreenShot]:
     """Capture all monitors. Each ScreenShot carries everything needed
     to convert detection coords back into logical screen space."""
     dpi = _query_dpi_scale()
@@ -89,7 +89,7 @@ def capture_all_screens(max_width: int = 1280) -> List[ScreenShot]:
                 )
 
             buf = io.BytesIO()
-            img.save(buf, format="JPEG", quality=75, optimize=True)
+            img.save(buf, format="JPEG", quality=65, optimize=True)
             encoded = base64.b64encode(buf.getvalue()).decode("utf-8")
 
             results.append(ScreenShot(

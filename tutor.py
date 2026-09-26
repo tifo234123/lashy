@@ -14,17 +14,63 @@ from ctypes import wintypes
 # ── Active-window title (for per-app context memory) ─────────────────────────
 
 def active_window_title() -> str:
+    # Linux X11 check
     try:
-        u = ctypes.windll.user32
-        hwnd = u.GetForegroundWindow()
-        if not hwnd:
-            return ""
-        n = u.GetWindowTextLengthW(hwnd)
-        buf = ctypes.create_unicode_buffer(n + 1)
-        u.GetWindowTextW(hwnd, buf, n + 1)
-        return buf.value or ""
+        import subprocess
+        res = subprocess.run(
+            ["xdotool", "getactivewindow", "getwindowname"],
+            capture_output=True, text=True, timeout=0.5
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout.strip()
     except Exception:
-        return ""
+        pass
+
+
+def active_window_id() -> str:
+    """Returns the active window X11 window ID, or empty string."""
+    try:
+        import subprocess
+        res = subprocess.run(
+            ["xdotool", "getactivewindow"],
+            capture_output=True, text=True, timeout=0.5
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def activate_window(wid: str) -> bool:
+    """Brings an X11 window to front and gives it input focus."""
+    if not wid:
+        return False
+    try:
+        import subprocess
+        res = subprocess.run(
+            ["xdotool", "windowactivate", "--sync", wid],
+            timeout=1.0
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+    # Windows check
+    try:
+        u = getattr(ctypes, "windll", None)
+        if u and hasattr(u, "user32"):
+            user32 = u.user32
+            hwnd = user32.GetForegroundWindow()
+            if not hwnd:
+                return ""
+            n = user32.GetWindowTextLengthW(hwnd)
+            buf = ctypes.create_unicode_buffer(n + 1)
+            user32.GetWindowTextW(hwnd, buf, n + 1)
+            return buf.value or ""
+    except Exception:
+        pass
+    return ""
 
 
 def app_key(title: str) -> str:

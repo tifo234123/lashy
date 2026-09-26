@@ -70,7 +70,7 @@ def _copilot_login_flow(tray, panel, manager):
             f"GitHub Copilot Sign-In\n\n"
             f"1. Visit: {verification_uri}\n"
             f"2. Enter code:  {user_code}\n"
-            f"3. Click Authorize — Clicky will sign in automatically."
+            f"3. Click Authorize — Lashy will sign in automatically."
         )
         # Show in panel (cross-thread safe via Qt signal)
         panel.show_copilot_code(user_code, verification_uri)
@@ -137,8 +137,8 @@ def main():
     )
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    app.setApplicationName("Clicky")
-    app.setApplicationDisplayName("Clicky - AI Companion")
+    app.setApplicationName("Lashy")
+    app.setApplicationDisplayName("Lashy - AI Companion")
 
     # ── Core components ───────────────────────────────────────────────────────
     manager = CompanionManager()
@@ -183,20 +183,28 @@ def main():
     _log_hint = Path(
         os.environ.get("LOCALAPPDATA", Path.home())
     ) / "Clicky" / "clicky.log"
-    manager.sig_error.connect(
-        lambda e: tray.show_notification(
-            "Clicky error", f"{e}\n\nFull details: {_log_hint}"
-        )
-    )
+    def _on_error(e):
+        tray.show_notification("Lashy error", f"{e}\n\nFull details: {_log_hint}")
+        panel.update_response(f"⚠️ Error: {e}")
+        panel.set_state(AppState.IDLE)
+    manager.sig_error.connect(_on_error)
+    manager.sig_status_text.connect(panel.set_status_text)
 
     # Panel → Manager
     panel.on_model_changed.connect(manager.set_model)
+    panel._emit_model()  # synchronize the restored dropdown after signals are wired
+    panel.on_text_submitted.connect(manager.ask_text)
+    panel.on_stop_requested.connect(manager.stop)
+    panel.on_push_to_talk_pressed.connect(manager.on_hotkey_press)
+    panel.on_push_to_talk_released.connect(manager.on_hotkey_release)
+    manager.sig_transcript.connect(panel.show_transcript)
+    panel.on_tts_toggled.connect(manager.set_tts_enabled)
 
     def _on_doc_dropped(path: str):
         ok = manager.attach_document(path)
         tray.show_notification(
             "Document Attached" if ok else "Attach failed",
-            f"{path}\nAsk Clicky about it now." if ok else
+            f"{path}\nAsk Lashy about it now." if ok else
             "Couldn't read that file."
         )
     panel.on_document_dropped.connect(_on_doc_dropped)
@@ -246,7 +254,7 @@ def main():
         if summary:
             tray.show_notification(
                 "Workflow Captured",
-                "Sent to Clicky as context. Ask: 'what did I just do?'"
+                "Sent to Lashy as context. Ask: 'what did I just do?'"
             )
             # Stash as an attached doc so the next question sees it
             manager._attached_docs.append(("recorded_workflow.txt", summary))
@@ -278,14 +286,14 @@ def main():
     def _attach_doc():
         from PyQt6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getOpenFileName(
-            None, "Attach a document for Clicky",
+            None, "Attach a document for Lashy",
             "", "Documents (*.pdf *.docx *.txt *.md *.csv)"
         )
         if path:
             ok = manager.attach_document(path)
             tray.show_notification(
                 "Document Attached",
-                f"{path}\nAsk Clicky about it now." if ok else
+                f"{path}\nAsk Lashy about it now." if ok else
                 "Couldn't read that file."
             )
     tray.on_attach_doc.connect(_attach_doc)
@@ -294,7 +302,7 @@ def main():
         manager.set_active_provider(name)
         panel.refresh_for_provider(name)       # repopulate model dropdown + badge
         tray.rebuild_menu()                    # tick mark moves to new provider
-        tray.show_notification("Clicky", f"Switched to {name}")
+        tray.show_notification("Lashy", f"Switched to {name}")
 
     tray.on_switch_provider.connect(_switch)
     tray.on_stop.connect(manager.stop)
@@ -360,7 +368,7 @@ def main():
             manager.set_active_provider(provider)
             panel.refresh_for_provider(provider)
             tray.rebuild_menu()
-            tray.show_notification("Clicky", f"API keys saved — using {provider}")
+            tray.show_notification("Lashy", f"API keys saved — using {provider}")
 
         dlg.keys_saved.connect(_applied)
         dlg.show()
@@ -420,24 +428,48 @@ def main():
         on_press=manager.on_hotkey_press,
         on_release=manager.on_hotkey_release,
     )
-    hotkey.start()
+    if not hotkey.start():
+        panel.set_status_text("Shortcut unavailable — use Hold to Talk")
+    app.aboutToQuit.connect(hotkey.stop)
 
     # Esc = cancel current generation (kills Ollama ramble mid-stream)
     stop_key = StopHotkey(on_stop=manager.stop, key="esc")
     stop_key.start()
+    app.aboutToQuit.connect(stop_key.stop)
 
     # ── Show UI + start listener ──────────────────────────────────────────────
     overlay.show()        # persistent overlay (cursor follow)
-    # Panel is hidden by default — user can open it from the tray menu if needed
+    panel.show()          # show chat companion panel on launch
+    panel.raise_()
+    panel.activateWindow()
+
+    # Global shortcut Ctrl+Alt+C to toggle the chat panel anytime
+    try:
+        from pynput import keyboard as pynput_keyboard
+        def _toggle_panel():
+            if panel.isVisible() and panel.isActiveWindow():
+                panel.hide()
+            else:
+                panel.show()
+                panel.raise_()
+                panel.activateWindow()
+                if hasattr(panel, "_chat_input"):
+                    panel._chat_input.setFocus()
+        _pynput_hk = pynput_keyboard.GlobalHotKeys({'<ctrl>+<alt>+c': _toggle_panel})
+        _pynput_hk.daemon = True
+        _pynput_hk.start()
+    except Exception:
+        pass
+
     manager.start()        # begin ambient mic + wake-word scanning
 
     providers = cfg.describe()
     _hk = "+".join(p.strip().capitalize() for p in cfg.hotkey.split("+"))
     tray.show_notification(
-        "Clicky is running",
+        "Lashy is running",
         (f"Say 'Clicky' or press {_hk}  |  LLM: {providers['llm']}"
          if cfg.ambient_mic() else
-         f"Press {_hk}, ask your question, and Clicky answers when you stop "
+         f"Press {_hk}, ask your question, and Lashy answers when you stop "
          f"talking  |  LLM: {providers['llm']}"),
     )
 
