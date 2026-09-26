@@ -12,8 +12,11 @@ class OpenAITTSProvider(BaseTTS):
         self._client = AsyncOpenAI(api_key=cfg.openai_api_key)
 
     async def speak(self, text: str) -> None:
+        await play_mp3_async(await self.synthesize(text))
+
+    async def synthesize(self, text: str) -> bytes:
         if not text.strip():
-            return
+            return b""
 
         response = await self._client.audio.speech.create(
             model="tts-1",
@@ -22,4 +25,4 @@ class OpenAITTSProvider(BaseTTS):
             response_format="mp3",
         )
 
-        await play_mp3_async(response.content)
+        return response.content

@@ -15,8 +15,11 @@ class ElevenLabsProvider(BaseTTS):
         self._voice_id = cfg.elevenlabs_voice_id or DEFAULT_VOICE_ID
 
     async def speak(self, text: str) -> None:
+        await play_mp3_async(await self.synthesize(text))
+
+    async def synthesize(self, text: str) -> bytes:
         if not text.strip():
-            return
+            return b""
 
         url = ELEVENLABS_TTS_URL.format(voice_id=self._voice_id)
         headers = {
@@ -34,4 +37,4 @@ class ElevenLabsProvider(BaseTTS):
             r.raise_for_status()
             audio_bytes = r.content
 
-        await play_mp3_async(audio_bytes)
+        return audio_bytes

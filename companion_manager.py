@@ -141,7 +141,8 @@ question mark."""
     base = cfg.custom_instructions.strip()
     base = base.replace("{{CONTEXT}}", chr(10).join(ctx_lines))
     base = base.replace("{{TODAY}}", today)
-    return base + _TECHNICAL_RULES + _code_addendum(code_active) + _lang_addendum(language_code) + extra
+    from speech_policy import VOICE_RULES
+    return base + _TECHNICAL_RULES + _code_addendum(code_active) + _lang_addendum(language_code) + extra + VOICE_RULES
 
 
 def _code_addendum(active: bool) -> str:
@@ -231,25 +232,70 @@ CLEAR_RE     = re.compile(r'\[CLEAR\]')
 CIRCLE_AT_RE    = re.compile(r'\[CIRCLE:@([^:\]]+?)' + _C + r'\]')
 UNDERLINE_AT_RE = re.compile(r'\[UNDERLINE:@([^:\]]+?)' + _C + r'\]')
 
+EXEC_RE        = re.compile(r'\[EXEC:([^\]]+)\]')
+TYPE_RE        = re.compile(r'\[TYPE:([^\]]+)\]')
+KEY_RE         = re.compile(r'\[KEY:([^\]]+)\]')
+CLICK_RE       = re.compile(r'\[CLICK\]')
+CLICK_COORD_RE = re.compile(r'\[CLICK:(\d+),(\d+)\]')
+WAIT_RE        = re.compile(r'\[WAIT:(\d+(?:\.\d+)?)\]')
+DONE_RE        = re.compile(r'\[DONE\]')
+STEP_RE        = re.compile(r'\[STEP:([^\]]+)\]')
+
 ANY_TAG_RE   = re.compile(
-    r'\[(?:POINT|ARROW|CIRCLE|UNDERLINE|LABEL|LINE|RECT|POLY|TEXT|ANGLE|CLEAR)'
+    r'\[(?:POINT|ARROW|CIRCLE|UNDERLINE|LABEL|LINE|RECT|POLY|TEXT|ANGLE|CLEAR|EXEC|TYPE|KEY|CLICK|WAIT|DONE|STEP)'
     r'(?::[^\]]*)?\]'
 )
 ANY_PARTIAL_RE = re.compile(r'\[[A-Z]{0,9}(?::[^\]]*)?$')
 
 # Questions that ask Clicky to locate / click UI elements — triggers the
-# Computer Use element locator when Claude is the provider.
-POINT_TRIGGER_RE = re.compile(
-    r"\b(where\s+(is|do|can)|how\s+do\s+i\s+(click|find|open|access|use)|"
-    r"point\s+(at|to)|show\s+me\s+(the|where)|click\s+(the|on)|find\s+the)\b",
-    re.IGNORECASE,
-)
+def _is_action_task(transcript: str) -> bool:
+    from task_executor import is_task_followup
+    t = transcript.lower().strip()
+    if is_task_followup(t):
+        return True
+    t = re.sub(r"^(?:(?:please|can you|could you|would you|i want you to|help me)\s+)+", "", t)
+    chain_words = [
+        " then ", " and then ", " after that ", " next ",
+        " followed by ", " once that's done ", " and also ",
+        " then open ", " then go to ", " then send ", " then click ", " then type "
+    ]
+    if any(kw in t for kw in chain_words):
+        return True
+
+    action_starts = (
+        "send ", "text ", "message ", "write ", "email ",
+        "open ", "launch ", "start ", "go to ",
+        "click ", "press ", "type ",
+        "create ", "delete ", "remove ", "download ", "install ", "update ", "run ",
+        "search for ", "find ", "research ", "browse ", "apply ", "fill ", "complete ", "organize ", "book ", "compare ",
+        "do ", "do the ", "apply", "fill ", "complete ", "submit ", "solve ", "fix ",
+        "handle ", "work on ", "proceed", "continue", "automate ", "execute "
+    )
+    if any(t.startswith(prefix) for prefix in action_starts):
+        return True
+
+    if re.search(r"\b(tell|say|send|message|text|write)\b.*\b(to|him|her|them|on whatsapp|on telegram|via whatsapp)\b", t):
+        return True
+
+    action_verbs = r"(open|launch|go to|start|take|run|create|make|write|find|search for|look for|type|send|click|message|apply|fill|solve|complete|do)"
+    if re.search(rf"\b{action_verbs}\b.*\b(and|then)\b.*\b{action_verbs}\b", t):
+        return True
+
+    # Imperative task phrases
+    if t in ("do the job", "do it", "apply", "apply now", "continue", "proceed", "go ahead", "fill form"):
+        return True
+
+    return False
+
+_is_multistep_request = _is_action_task
 
 
 class CompanionManager(QObject):
+    sig_transcript = pyqtSignal(str)
     """Thread-safe signals for Qt UI updates from async/audio threads."""
 
     sig_state_changed       = pyqtSignal(object)          # AppState
+    sig_status_text         = pyqtSignal(str)
     sig_response_chunk      = pyqtSignal(str)
     sig_response_done       = pyqtSignal(str)
     sig_audio_level         = pyqtSignal(float)
@@ -273,7 +319,7 @@ class CompanionManager(QObject):
         super().__init__()
         self._state: AppState = AppState.IDLE
         self._history: List[Message] = []
-        self._current_model: Optional[str] = None
+        self._current_model: Optional[str] = cfg.selected_model() or None
         self._web_search_enabled = True
         self._loop: Optional[asyncio.AbstractEventLoop] = None
 
@@ -341,6 +387,16 @@ class CompanionManager(QObject):
         self._collab: Optional[collab.CollabSession] = None
         self._workflow: Optional[workflow_capture.WorkflowCapture] = None
 
+        # Linux target window tracking & Fast TTS toggle
+        self._target_window_id: str = ""
+        self._target_window_title: str = ""
+        self._tts_enabled: bool = False   # Fast chat by default (no mic required)
+
+        from PyQt6.QtCore import QTimer
+        self._win_poll_timer = QTimer(self)
+        self._win_poll_timer.timeout.connect(self._poll_active_window)
+        self._win_poll_timer.start(500)
+
         # Load user-created skills from skills/ + ~/.clicky/skills/
         try:
             skills_pkg.load_all()
@@ -358,6 +414,44 @@ class CompanionManager(QObject):
         # Background asyncio loop
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
+
+    def _poll_active_window(self):
+        try:
+            from tutor import active_window_id, active_window_title
+            wid = active_window_id()
+            name = active_window_title()
+            if wid and "clicky" not in name.lower() and "lashy" not in name.lower() and name.strip():
+                self._target_window_id = wid
+                self._target_window_title = name
+        except Exception:
+            pass
+
+    def set_tts_enabled(self, enabled: bool):
+        if enabled and (getattr(self, '_query_running', False) or self._state != AppState.IDLE):
+            return  # unmute applies only before a new request
+        self._tts_enabled = enabled
+        if not enabled:
+            self._cancel_narration()
+            from audio.playback import stop_audio
+            stop_audio()
+        _log.info("TTS enabled set to %s", enabled)
+
+    @property
+    def tts_enabled(self) -> bool:
+        return self._tts_enabled
+
+    def _build_system_prompt_for_step(self, window_title: str = "", step_num: int = 1) -> str:
+        from task_history import task_history
+        hist_extra = "\n\n" + task_history.format_recent_for_prompt() if task_history.load_all() else ""
+        return _build_system_prompt(
+            window_title=window_title,
+            lesson_step=0,
+            total_steps=0,
+            extra=hist_extra + "".join(
+                pdf_context.format_for_prompt(name, text)
+                for name, text in self._attached_docs
+            ),
+        )
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -459,6 +553,8 @@ class CompanionManager(QObject):
         fut = asyncio.run_coroutine_threadsafe(coro, self._loop)
 
         def _observe(f):
+            if f.cancelled():
+                return
             try:
                 f.result()
             except Exception as e:
@@ -574,13 +670,15 @@ class CompanionManager(QObject):
     def on_hotkey_press(self):
         if not self._claim_begin():
             return
+        self._ptt_held = True
         self._hotkey_pressed_at = time.monotonic()
         self._begin_capture()
         # Arm the silence watchdog straight away. If this turns out to be a
         # hold rather than a tap, on_hotkey_release claims the end first.
-        self._submit(self._auto_stop_on_silence())
+        self._submit(self._auto_stop_on_silence(self._capture_id))
 
     def on_hotkey_release(self):
+        self._ptt_held = False
         if self._state != AppState.LISTENING:
             return
         held = time.monotonic() - self._hotkey_pressed_at
@@ -596,7 +694,7 @@ class CompanionManager(QObject):
         if not self._claim_begin():
             return
         self._begin_capture()
-        self._submit(self._auto_stop_on_silence())
+        self._submit(self._auto_stop_on_silence(self._capture_id))
 
     def _claim_begin(self) -> bool:
         """Exactly one of {hotkey press, wake word} may open a capture.
@@ -628,6 +726,8 @@ class CompanionManager(QObject):
     # ── Capture flow ──────────────────────────────────────────────────────────
 
     def _begin_capture(self):
+        self._cancel_flag = False
+        self._capture_id = getattr(self, "_capture_id", 0) + 1
         self._end_claimed = False
         self._last_rms = 0.0
         # Silence anything still playing from the previous turn. Without this
@@ -649,6 +749,7 @@ class CompanionManager(QObject):
             self._emit_state(AppState.IDLE)
             return
         self._emit_state(AppState.LISTENING)
+        self.sig_status_text.emit("Listening — release when you finish")
 
     # End-of-speech tuning. SPEECH_RMS matches the ambient listener's VAD
     # threshold so both agree on what counts as speech.
@@ -657,7 +758,7 @@ class CompanionManager(QObject):
     _NO_SPEECH_S       = 6.0    # nothing said at all = give up
     _MAX_UTTERANCE_S   = 45.0   # hard cap so a stuck mic can't record forever
 
-    async def _auto_stop_on_silence(self):
+    async def _auto_stop_on_silence(self, capture_id=None):
         """End the capture once the user actually stops talking.
 
         The previous version just waited a flat 10 seconds, which cut long
@@ -665,6 +766,7 @@ class CompanionManager(QObject):
         This watches the live mic level instead: wait for speech to start,
         then end on a sustained pause.
         """
+        capture_id = self._capture_id if capture_id is None else capture_id
         start_t = time.monotonic()
         speech_started = False
         silence_from: Optional[float] = None
@@ -673,6 +775,12 @@ class CompanionManager(QObject):
             await asyncio.sleep(0.05)
             now = time.monotonic()
 
+            if capture_id != self._capture_id or self._state != AppState.LISTENING:
+                return
+            if now - start_t > self._MAX_UTTERANCE_S:
+                break
+            if getattr(self, "_ptt_held", False):
+                continue
             if self._last_rms > self._SPEECH_RMS:
                 speech_started = True
                 silence_from = None
@@ -687,10 +795,17 @@ class CompanionManager(QObject):
             if now - start_t > self._MAX_UTTERANCE_S:
                 break
 
-        if self._claim_end():
+        if capture_id == self._capture_id and self._state == AppState.LISTENING and self._claim_end():
             await self._end_capture_and_process()
 
+    def ask_text(self, text: str):
+        """Entry point for text/chat input from the panel or scripts."""
+        if not text or not text.strip():
+            return
+        self._submit(self.process_query(text.strip(), audio_seconds=999.0, from_text=True))
+
     async def _end_capture_and_process(self):
+        capture_id = self._capture_id
         try:
             pcm = self._listener.stop_recording()
         except Exception as e:
@@ -701,32 +816,73 @@ class CompanionManager(QObject):
         _log.info("captured %.1fs of audio", len(pcm) / 32000)
         if len(pcm) < 3200:  # < 0.1s of audio — ignore
             self._emit_state(AppState.IDLE)
+            self.sig_status_text.emit("No audio captured — hold to talk and try again")
             return
 
         # 32000 bytes == 1s of 16 kHz mono int16.
         audio_seconds = len(pcm) / 32000.0
 
         self._emit_state(AppState.THINKING)
-        pointing_held = False  # track whether we told overlay to hold dwell
-
+        self.sig_status_text.emit("Transcribing your voice…")
         try:
             # 1. Transcribe — bounded so a hung/downloading STT model can
             # never freeze the UI on "Thinking..." forever
             transcript = await asyncio.wait_for(
                 self._get_stt().transcribe(pcm), timeout=90,
             )
+            if capture_id != self._capture_id or self._cancel_flag:
+                return
             _log.info("transcript: %r (provider=%s)",
                       transcript[:120], cfg.llm_provider())
             if not transcript.strip():
                 self._emit_state(AppState.IDLE)
+                self.sig_status_text.emit("No speech recognized — hold to talk and try again")
                 return
+            self.sig_transcript.emit(transcript.strip())
+            await self.process_query(transcript, audio_seconds=audio_seconds, from_text=False)
+        except Exception as e:
+            _log.exception("audio transcription failed: %s", e)
+            self.sig_error.emit(str(e))
+            self._emit_state(AppState.IDLE)
+
+    async def process_query(self, transcript: str, audio_seconds: float = 999.0, from_text: bool = False):
+        if is_stop(transcript):
+            self.stop()
+            return
+        if getattr(self, "_query_running", False):
+            self.sig_status_text.emit("A task is still running. Press Esc to stop it first.")
+            return
+        self._query_running = True
+        self._cancel_flag = False
+        self._stop_pending = False
+        self._current_task = asyncio.current_task()
+        from audio.playback import begin_audio_session
+        begin_audio_session()
+        try:
+            await self._process_query_impl(transcript, audio_seconds, from_text)
+        except asyncio.CancelledError:
+            pass
+        finally:
+            self._query_running = False
+            self._current_task = None
+            self._stop_pending = False
+
+    async def _process_query_impl(self, transcript: str, audio_seconds: float = 999.0, from_text: bool = False):
+        self._executed_cmds = set()
+        self._executed_types = set()
+        self._executed_keys = set()
+        self._emit_state(AppState.THINKING)
+        pointing_held = False  # track whether we told overlay to hold dwell
+        narrator = None
+        from response_policy import needs_web_search, is_greeting
+        try:
 
             # ── Voice commands — short-circuit before LLM ──
             if is_stop(transcript):
                 self.stop()
                 return
 
-            title = active_window_title()
+            title = self._target_window_title or active_window_title()
             ak = app_key(title)
 
             # Voice commands are one or two words, so they cannot come from a
@@ -734,7 +890,7 @@ class CompanionManager(QObject):
             # ("Continue.", "Repeat.") on unclear or code-mixed speech, and
             # without this length check a mis-transcribed sentence silently
             # replayed the previous answer instead of being asked.
-            command_plausible = audio_seconds <= self._MAX_COMMAND_SECONDS
+            command_plausible = from_text or audio_seconds <= self._MAX_COMMAND_SECONDS
             if not command_plausible and (is_next(transcript) or is_repeat(transcript)):
                 _log.info(
                     "ignoring %r as a voice command — %.1fs of audio is too "
@@ -773,6 +929,20 @@ class CompanionManager(QObject):
                 await self._spaced_review()
                 return
 
+            # Multi-step task agentic executor: decomposes composite tasks into steps
+            if _is_multistep_request(transcript):
+                _log.info("Dispatching multi-step task to TaskExecutor: %r", transcript)
+                from task_executor import TaskExecutor
+                executor = TaskExecutor(self)
+                history = self._app_memory.setdefault(ak, [])
+                context = getattr(self, "_recent_conversation", None) or history
+                result = await executor.execute_task(transcript, context=context)
+                history.extend([Message(role="user", content=transcript),
+                                Message(role="assistant", content=result)])
+                self._app_memory[ak] = history[-20:]
+                self._recent_conversation = history[-12:]
+                return
+
             # User-created skills (run BEFORE the LLM, like built-ins above)
             try:
                 skill = skills_pkg.match(transcript)
@@ -794,7 +964,7 @@ class CompanionManager(QObject):
             # actually wants when they ask "who is MrBeast" while on YouTube.
             sensitive = self._privacy_guard and is_sensitive_window(title)
             identity_q = is_identity_question(transcript)
-            if sensitive or identity_q:
+            if sensitive or identity_q or is_greeting(transcript):
                 screenshots = []
                 images_b64 = []
             else:
@@ -833,7 +1003,7 @@ class CompanionManager(QObject):
 
             search_task = None
             locate_task = None
-            if self._web_search_enabled:
+            if self._web_search_enabled and needs_web_search(transcript):
                 from ai.web_search import search
                 search_task = asyncio.create_task(search(transcript))
 
@@ -968,6 +1138,10 @@ class CompanionManager(QObject):
                 language_code=lang_code,
                 extra=ocr_extra + doc_extra + fig_extra,
             )
+            if is_greeting(transcript):
+                system += "\nThis is a greeting: answer naturally and briefly without a task plan or action tags."
+            elif not needs_web_search(transcript):
+                system += "\nThis request is about the visible interface. Give a direct explanation; plan further steps only if the user asked for them."
             if sensitive:
                 system += (
                     "\n\nPRIVACY GUARD: the user's active window looks sensitive "
@@ -982,6 +1156,10 @@ class CompanionManager(QObject):
             # Use per-app history so context doesn't bleed between apps
             history = self._app_memory.setdefault(ak, [])
 
+            narrator = self._start_narration(lang_code)
+            generation_started = time.monotonic()
+            first_chunk = True
+
             # 5. Stream LLM — buffer partial [POINT:...] tags so they never leak
             full_response = ""
             display_buf = ""
@@ -995,7 +1173,12 @@ class CompanionManager(QObject):
             ):
                 if self._cancel_flag:
                     break
+                if first_chunk:
+                    _log.info("Response first token: %.2fs", time.monotonic() - generation_started)
+                    first_chunk = False
                 full_response += chunk
+                if narrator:
+                    narrator.feed(chunk)
                 display_buf += chunk
                 self._parse_points(display_buf)
                 display_buf = ANY_TAG_RE.sub("", display_buf)
@@ -1010,11 +1193,14 @@ class CompanionManager(QObject):
                     self.sig_response_chunk.emit(flush)
             if display_buf:
                 self.sig_response_chunk.emit(ANY_TAG_RE.sub("", display_buf))
+            # Safety net: parse full response for any tags
+            self._parse_points(full_response)
 
             # 6. Update per-app history
             history.append(Message(role="user", content=transcript))
             history.append(Message(role="assistant", content=full_response))
             self._app_memory[ak] = history[-20:]
+            self._recent_conversation = history[-12:]
 
             # Multistep: parse numbered steps for later "next" invocations
             if multistep and not self._lesson_steps:
@@ -1054,26 +1240,11 @@ class CompanionManager(QObject):
                 except Exception:
                     pass
 
-            # 7. TTS — hold the point visible while we speak. Switch voice
-            # to match the user's language for multilingual mode.
-            if self._cancel_flag:
-                return
-            if self._multilang:
-                try:
-                    stable = self._stable_voice_language(lang_code)
-                    if stable != self._applied_voice_lang:
-                        tts = self._get_tts()
-                        if hasattr(tts, "set_voice"):
-                            tts.set_voice(multilang.voice_for(stable))
-                            self._applied_voice_lang = stable
-                            _log.info("reply voice switched to %r", stable)
-                except Exception:
-                    pass
-            self._emit_state(AppState.SPEAKING)
-            try:
-                await self._play_lesson(full_response, clean)
-            except asyncio.CancelledError:
-                pass
+            # Audio is already playing as sentences arrive. Drain only the
+            # remaining speech; never replay the complete answer at the end.
+            if narrator and not self._cancel_flag:
+                self._emit_state(AppState.SPEAKING)
+                await narrator.finish()
 
         except Exception as e:
             # Log the traceback, not just the message. The toast shows one
@@ -1085,20 +1256,79 @@ class CompanionManager(QObject):
             self.sig_error.emit(str(e))
 
         finally:
+            if narrator:
+                await narrator.abort()
+                if getattr(self, '_narration', None) is narrator:
+                    self._narration = None
             if pointing_held:
                 self.sig_point_release.emit()
             self._emit_state(AppState.IDLE)
+
+    def _start_narration(self, language_code=None):
+        if not self._tts_enabled:
+            return None
+        from audio.streaming_narration import StreamingNarrator, clean_text
+        from audio.playback import decode_mp3_to_pcm, play_pcm_async, drain_audio_async, stop_audio
+        try:
+            tts = self._get_tts()
+        except Exception as exc:
+            _log.warning('Voice initialization failed: %s', exc)
+            self.sig_status_text.emit('Voice unavailable — continuing with text')
+            return None
+        if language_code and (self._multilang or cfg.response_language):
+            stable = language_code if cfg.response_language else self._stable_voice_language(language_code)
+            if stable != self._applied_voice_lang and hasattr(tts, 'set_voice'):
+                tts.set_voice(multilang.voice_for(stable))
+                self._applied_voice_lang = stable
+        started = time.monotonic()
+        first_audio = True
+
+        async def prepare(raw):
+            if self._cancel_flag or not self._tts_enabled:
+                return None
+            synthesize = getattr(tts, 'synthesize', None)
+            if callable(synthesize) and not self._extract_shapes(raw):
+                audio = await asyncio.wait_for(synthesize(_speakable(clean_text(raw))), 30)
+                if not audio:
+                    return None
+                return await asyncio.to_thread(decode_mp3_to_pcm, audio)
+            return None
+
+        async def speak(raw, audio):
+            nonlocal first_audio
+            if self._cancel_flag or not self._tts_enabled:
+                return
+            if first_audio:
+                _log.info("Response first audio ready: %.2fs", time.monotonic() - started)
+                first_audio = False
+            if audio is not None:
+                await play_pcm_async(*audio, drain=False)
+            else:
+                await self._play_lesson(raw, clean_text(raw))
+
+        def failed(exc):
+            _log.warning('Streaming voice unavailable: %s', exc)
+            self.sig_status_text.emit('Voice unavailable — continuing with text')
+
+        self._narration = StreamingNarrator(prepare, speak, failed, stop_audio, drain_audio_async)
+        return self._narration
+
+    def _cancel_narration(self):
+        narrator = getattr(self, '_narration', None)
+        if narrator and self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(narrator.cancel)
 
     async def _reply_local(self, msg: str):
         """Show + speak a message that doesn't need an LLM round-trip."""
         self.sig_response_chunk.emit(msg)
         self.sig_response_done.emit(msg)
         self._last_response = msg
-        self._emit_state(AppState.SPEAKING)
-        try:
-            await self._get_tts().speak(msg)
-        except Exception:
-            pass
+        if self._tts_enabled:
+            self._emit_state(AppState.SPEAKING)
+            try:
+                await self._get_tts().speak(msg)
+            except Exception:
+                pass
         self._emit_state(AppState.IDLE)
 
     async def _spaced_review(self):
@@ -1202,14 +1432,140 @@ class CompanionManager(QObject):
             return None
 
     def _parse_points(self, text: str):
-        """Live-during-stream tags: pointing and board-clear only. Drawing
-        tags are deferred and played back in sync with narration."""
+        """Live-during-stream tags: pointing, actions, and board-clear."""
         for match in POINT_RE.finditer(text):
             x, y, label, scr = match.groups()
             lx, ly = self._denorm(float(x), float(y), int(scr))
             self.sig_point_at.emit(lx, ly, label.strip())
         if CLEAR_RE.search(text):
             self.sig_clear_drawings.emit()
+        for match in EXEC_RE.finditer(text):
+            cmd = match.group(1).strip()
+            self._execute_action_cmd(cmd)
+        for match in TYPE_RE.finditer(text):
+            typed_text = match.group(1)
+            self._type_action_text(typed_text)
+        for match in KEY_RE.finditer(text):
+            combo = match.group(1).strip()
+            self._key_action(combo)
+        for match in CLICK_COORD_RE.finditer(text):
+            x, y = match.groups()
+            self._click_coord_action(float(x), float(y))
+        if CLICK_RE.search(text):
+            self._click_action()
+
+    def _execute_action_cmd(self, cmd: str):
+        from speech_policy import external_speech_command
+        if external_speech_command(cmd):
+            note = 'System speech was not launched. Put the reading text in your response once; Lashy handles voice and mute. Then finish the task.'
+            self.sig_status_text.emit('Using built-in voice instead of system speech')
+            return note
+        if not hasattr(self, "_executed_cmds"):
+            self._executed_cmds = set()
+        if cmd in self._executed_cmds:
+            return
+        self._executed_cmds.add(cmd)
+        _log.info("Executing action command: %s", cmd)
+        try:
+            import subprocess
+            subprocess.Popen(cmd, shell=True, start_new_session=True)
+        except Exception as e:
+            _log.warning("Failed to execute action command '%s': %s", cmd, e)
+
+    def _type_action_text(self, text: str):
+        if not hasattr(self, "_executed_types"):
+            self._executed_types = set()
+        if text in self._executed_types:
+            return
+        self._executed_types.add(text)
+        _log.info("Typing action text: %s", text)
+        target_wid = getattr(self, "_target_window_id", "")
+        if target_wid:
+            try:
+                from tutor import activate_window
+                activate_window(target_wid)
+                time.sleep(0.05)
+            except Exception:
+                pass
+        try:
+            import subprocess
+            res = subprocess.run(["xdotool", "type", "--delay", "8", "--", text], timeout=3.0)
+            if res.returncode == 0:
+                return
+        except Exception:
+            pass
+        try:
+            from pynput.keyboard import Controller
+            Controller().type(text)
+        except Exception as e:
+            _log.warning("Failed to type action text: %s", e)
+
+    def _key_action(self, combo: str):
+        if not hasattr(self, "_executed_keys"):
+            self._executed_keys = set()
+        if combo in self._executed_keys:
+            return
+        self._executed_keys.add(combo)
+        _log.info("Sending key combo: %s", combo)
+        target_wid = getattr(self, "_target_window_id", "")
+        if target_wid:
+            try:
+                from tutor import activate_window
+                activate_window(target_wid)
+                time.sleep(0.05)
+            except Exception:
+                pass
+        try:
+            import subprocess
+            subprocess.run(["xdotool", "key", combo], timeout=1.0)
+        except Exception as e:
+            _log.warning("Failed to send key '%s': %s", combo, e)
+
+    def _click_action(self):
+        try:
+            import subprocess
+            res = subprocess.run(["xdotool", "click", "1"], timeout=1.0)
+            if res.returncode == 0:
+                return
+        except Exception:
+            pass
+        try:
+            from pynput.mouse import Controller, Button
+            Controller().click(Button.left)
+        except Exception as e:
+            _log.warning("Failed to click: %s", e)
+
+    def _click_coord_action(self, nx: float, ny: float):
+        if not hasattr(self, "_executed_clicks"):
+            self._executed_clicks = set()
+        coord_key = (round(float(nx), 1), round(float(ny), 1))
+        if coord_key in self._executed_clicks:
+            return
+        self._executed_clicks.add(coord_key)
+        try:
+            lx, ly = self._denorm(nx, ny, 1)
+            _log.info("Clicking at normalized (%.1f, %.1f) -> screen (%d, %d)", nx, ny, int(lx), int(ly))
+            target_wid = getattr(self, "_target_window_id", "")
+            if target_wid:
+                try:
+                    from tutor import activate_window
+                    activate_window(target_wid)
+                    time.sleep(0.04)
+                except Exception:
+                    pass
+            import subprocess
+            res = subprocess.run(["xdotool", "mousemove", str(int(lx)), str(int(ly)), "click", "1"], timeout=1.0)
+            if res.returncode == 0:
+                return
+        except Exception:
+            pass
+        try:
+            from pynput.mouse import Controller, Button
+            lx, ly = self._denorm(nx, ny, 1)
+            Controller().position = (lx, ly)
+            Controller().click(Button.left)
+        except Exception as e:
+            _log.warning("Failed to click coord: %s", e)
 
     # ── Vertex snapping (figure-detector assisted accuracy) ─────────────────
 
@@ -1433,13 +1789,14 @@ class CompanionManager(QObject):
     # ── Settings ──────────────────────────────────────────────────────────────
 
     def set_model(self, model: str):
-        self._current_model = model
+        self._current_model = None if model == "default" else model
+        cfg.set_selected_model(model)
 
     def set_active_provider(self, name: str):
         """Runtime switch between claude / openai / copilot / gemini / ollama."""
         cfg.set_active_llm(name)
         self._retire_llm()         # force re-init on next query, close old pool
-        self._current_model = None
+        self._current_model = cfg.selected_model(name) or None
         # If switching to Copilot and the cached model list is stale (or
         # missing), refresh it in the background so the panel shows the
         # *current* set of models GitHub offers — not stale hardcoded ones.
@@ -1618,6 +1975,8 @@ class CompanionManager(QObject):
         without waiting for a user utterance."""
         if self._state != AppState.IDLE:
             return
+        from audio.playback import begin_audio_session
+        begin_audio_session()
         try:
             self._emit_state(AppState.THINKING)
             screenshots = capture_all_screens()
@@ -1665,6 +2024,8 @@ class CompanionManager(QObject):
     def clear_history(self):
         self._history = []
         self._app_memory.clear()
+        self._recent_conversation = []
+        self._task_session = None
         self._lesson_steps = []
         self._lesson_step_idx = 0
 
@@ -1763,6 +2124,15 @@ class CompanionManager(QObject):
     def stop(self):
         """Cancel the current LLM stream + any in-flight TTS. Bound to Esc."""
         self._cancel_flag = True
+        self._cancel_narration()
+        self._ptt_held = False
+        self._capture_id = getattr(self, "_capture_id", 0) + 1
+        if self._state == AppState.LISTENING:
+            self._end_claimed = True
+            try:
+                self._listener.stop_recording()
+            except Exception:
+                pass
         # Kill audio playback immediately — flips the global stop event so
         # the chunked PortAudio loop bails out within ~50 ms.
         try:
@@ -1780,4 +2150,11 @@ class CompanionManager(QObject):
         # Clear any stored lesson so "stop" really means "back to zero"
         self._lesson_steps = []
         self._lesson_step_idx = 0
-        self._emit_state(AppState.IDLE)
+        current = self._current_task
+        if current is not None and not current.done() and self._loop and self._loop.is_running():
+            if not getattr(self, '_stop_pending', False):
+                self._stop_pending = True
+                self._loop.call_soon_threadsafe(current.cancel)
+            self.sig_status_text.emit('Stopping…')
+        else:
+            self._emit_state(AppState.IDLE)

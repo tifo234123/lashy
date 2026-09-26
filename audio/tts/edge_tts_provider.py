@@ -24,8 +24,11 @@ class EdgeTTSProvider(BaseTTS):
             self._voice = voice
 
     async def speak(self, text: str) -> None:
+        await play_mp3_async(await self.synthesize(text))
+
+    async def synthesize(self, text: str) -> bytes:
         if not text.strip():
-            return
+            return b""
 
         communicate = edge_tts.Communicate(text, self._voice)
         buf = io.BytesIO()
@@ -33,7 +36,7 @@ class EdgeTTSProvider(BaseTTS):
             if chunk["type"] == "audio":
                 buf.write(chunk["data"])
 
-        await play_mp3_async(buf.getvalue())
+        return buf.getvalue()
 
     @staticmethod
     def list_voices_sync() -> list:

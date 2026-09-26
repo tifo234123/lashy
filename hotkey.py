@@ -1,4 +1,5 @@
 import threading
+import sys
 import time
 from typing import Callable
 
@@ -33,7 +34,7 @@ def _is_down(token: str) -> bool:
 
 def _norm_token(name: str) -> str:
     """Canonicalize a keyboard-event key name → modifier token."""
-    n = (name or "").lower()
+    n = (name or "").lower().replace("_l", "").replace("_r", "")
     if "ctrl" in n or n == "control":
         return "ctrl"
     if "alt" in n:
@@ -87,15 +88,42 @@ class GlobalHotkeyMonitor:
         # a missed first evaluation would never be retried.
         self._need = {_norm_token(p) for p in self._parts}
         self._down: set = set()
+        self._listener = None
+        self._physical_keys = {}
 
     def start(self):
-        if self._modifier_only:
-            # No terminal key — watch the global key stream and track state.
-            self._hook_handle = keyboard.hook(self._on_any_event)
-        else:
-            terminal = self._parts[-1]
-            keyboard.on_press_key(terminal, self._handle_press)
-            keyboard.on_release_key(terminal, self._handle_release)
+        try:
+            if sys.platform.startswith("linux"):
+                from pynput.keyboard import Listener
+                self._listener = Listener(on_press=self._linux_press, on_release=self._linux_release)
+                self._listener.start()
+                self._listener.wait()
+                return True
+            if self._modifier_only:
+                # No terminal key — watch the global key stream and track state.
+                self._hook_handle = keyboard.hook(self._on_any_event)
+            else:
+                terminal = self._parts[-1]
+                keyboard.on_press_key(terminal, self._handle_press)
+                keyboard.on_release_key(terminal, self._handle_release)
+            return True
+        except Exception as e:
+            import logging
+            logging.getLogger("clicky.hotkey").warning("Global hotkey hook not available on this environment: %s", e)
+            return False
+
+    def _linux_press(self, key):
+        token = _norm_token(getattr(key, "name", None) or getattr(key, "char", ""))
+        self._physical_keys[key] = token
+        if not self._held and self._need.issubset(set(self._physical_keys.values())):
+            self._held = True
+            self._on_press()
+
+    def _linux_release(self, key):
+        self._physical_keys.pop(key, None)
+        if self._held and not self._need.issubset(set(self._physical_keys.values())):
+            self._held = False
+            self._on_release()
 
     # ── Modifier-only mode ────────────────────────────────────────────────────
 
@@ -150,6 +178,10 @@ class GlobalHotkeyMonitor:
             self._on_release()
 
     def stop(self):
+        if self._listener is not None:
+            self._listener.stop()
+            self._listener = None
+            return
         if self._hook_handle is not None:
             try:
                 keyboard.unhook(self._hook_handle)
@@ -170,6 +202,23 @@ class StopHotkey:
     def __init__(self, on_stop: Callable[[], None], key: str = "esc"):
         self._on_stop = on_stop
         self._key = key
+        self._listener = None
+        self._handle = None
 
     def start(self):
-        keyboard.add_hotkey(self._key, self._on_stop, suppress=False)
+        try:
+            if sys.platform.startswith("linux"):
+                from pynput.keyboard import Listener
+                self._listener = Listener(on_press=lambda key: self._on_stop() if getattr(key, "name", "") == self._key else None)
+                self._listener.start()
+                self._listener.wait()
+            else:
+                self._handle = keyboard.add_hotkey(self._key, self._on_stop, suppress=False)
+        except Exception:
+            pass
+
+    def stop(self):
+        if self._listener is not None:
+            self._listener.stop()
+        elif self._handle is not None:
+            keyboard.remove_hotkey(self._handle)
