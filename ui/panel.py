@@ -565,11 +565,15 @@ class CompanionPanel(QWidget):
     on_tts_toggled = pyqtSignal(bool)
     on_model_changed = pyqtSignal(str)
     on_document_dropped = pyqtSignal(str)
+    on_toggle_requested = pyqtSignal()
     _sig_copilot_code = pyqtSignal(str, str)
     _sig_copilot_error = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
+        # Hotkey callbacks fire on the keyboard-listener thread; routing the
+        # toggle through this signal queues it onto the GUI thread.
+        self.on_toggle_requested.connect(self._toggle_visible)
         self._glass_hover = 0.0
         self._glass_anim = tween(self, b'glassHover', 0., 0., 280)
         self._light_timer = QTimer(self)
@@ -1054,6 +1058,17 @@ class CompanionPanel(QWidget):
         animation.setStartValue(start)
         animation.setEndValue(1.)
         group.start()
+
+    def _toggle_visible(self):
+        """Show/hide the panel — runs on the GUI thread via on_toggle_requested."""
+        if self.isVisible() and self.isActiveWindow():
+            self.hide()
+        else:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+            if hasattr(self, '_chat_input'):
+                self._chat_input.setFocus()
 
     def showEvent(self, event):
         super().showEvent(event)

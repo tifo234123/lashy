@@ -424,15 +424,11 @@ def main():
     tray.on_quit.connect(lambda: (tray.hide_icon(), manager.shutdown(), app.quit()))
 
     # ── Panel toggle (shared by Ctrl+Win tap and Ctrl+Alt+C) ──────────────────
+    # Emitted as a Qt signal so the actual show/hide always runs on the GUI
+    # thread — hotkey callbacks arrive on the keyboard-listener thread and
+    # QWidget calls from there kill timers cross-thread (app exits).
     def _toggle_panel():
-        if panel.isVisible() and panel.isActiveWindow():
-            panel.hide()
-        else:
-            panel.show()
-            panel.raise_()
-            panel.activateWindow()
-            if hasattr(panel, "_chat_input"):
-                panel._chat_input.setFocus()
+        panel.on_toggle_requested.emit()
 
     # ── Global hotkey ─────────────────────────────────────────────────────────
     # Ctrl+Win does double duty, split by press duration:
