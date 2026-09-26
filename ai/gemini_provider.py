@@ -12,7 +12,7 @@ import httpx
 from ai.base_provider import BaseLLMProvider, Message
 from config import cfg
 
-_log = logging.getLogger("clicky.gemini")
+_log = logging.getLogger("lashy.gemini")
 
 DEFAULT_MODEL = "gemini-3-flash-preview"
 FALLBACK_MODELS = ["gemini-3-flash-preview", "gemini-3.6-flash", "gemini-3.8-flash"]

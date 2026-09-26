@@ -1,12 +1,12 @@
 @echo off
 REM ────────────────────────────────────────────────────────────────────
-REM Clicky Windows — one-click build script
+REM Lashy Windows — one-click build script
 REM
-REM Produces:  dist\Clicky\Clicky.exe   (portable folder)
-REM            Setup-Clicky.exe         (if Inno Setup is installed)
+REM Produces:  dist\Lashy\Lashy.exe   (portable folder)
+REM            Setup-Lashy.exe         (if Inno Setup is installed)
 REM
 REM Usage:  build.bat           ← builds portable folder only
-REM         build.bat installer ← also builds Setup-Clicky.exe
+REM         build.bat installer ← also builds Setup-Lashy.exe
 REM ────────────────────────────────────────────────────────────────────
 
 setlocal enabledelayedexpansion
@@ -14,7 +14,7 @@ cd /d "%~dp0"
 
 echo.
 echo ================================================================
-echo   Clicky for Windows — Build
+echo   Lashy — Build
 echo ================================================================
 echo.
 
@@ -52,7 +52,7 @@ if exist dist rmdir /s /q dist
 
 REM ── 4. Run PyInstaller ─────────────────────────────────────────────
 echo [3/4] Building with PyInstaller (this takes 2-5 min)...
-python -m PyInstaller clicky.spec --clean --noconfirm
+python -m PyInstaller lashy.spec --clean --noconfirm
 if errorlevel 1 (
     echo.
     echo [ERROR] Build failed. Check the output above.
@@ -61,14 +61,14 @@ if errorlevel 1 (
 
 REM ── 5. Copy .env.example and LICENSE into the dist folder ─────────
 echo [4/4] Bundling docs and env template...
-copy /y ".env.example" "dist\Clicky\.env.example" >nul
-copy /y "LICENSE"       "dist\Clicky\LICENSE"      >nul
-copy /y "README.md"     "dist\Clicky\README.md"    >nul
+copy /y ".env.example" "dist\Lashy\.env.example" >nul
+copy /y "LICENSE"       "dist\Lashy\LICENSE"      >nul
+copy /y "README.md"     "dist\Lashy\README.md"    >nul
 
 echo.
 echo ================================================================
 echo   Portable build complete!
-echo   Run:  dist\Clicky\Clicky.exe
+echo   Run:  dist\Lashy\Lashy.exe
 echo ================================================================
 echo.
 
@@ -88,7 +88,7 @@ if /i "%1"=="installer" (
         iscc installer.iss
     )
     echo.
-    echo Installer: dist\Setup-Clicky.exe
+    echo Installer: dist\Setup-Lashy.exe
 )
 
 endlocal

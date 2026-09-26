@@ -4,7 +4,7 @@ First-run setup wizard.
 Shown once on the first launch (or whenever the user clicks
 "Tray → Run setup again…"). Walks the user through:
 
-  0. What Clicky is and how to use it
+  0. What Lashy is and how to use it
   1. Pick an engine — free local Ollama, or a cloud API key
   2. Detect Ollama       → start it if installed, install only if truly absent
   3. Detect text model   → pull if missing
@@ -40,7 +40,7 @@ from config import cfg
 # Marker file: the wizard skips itself if this exists.
 def _flag_path() -> Path:
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-    d = Path(base) / "Clicky"
+    d = Path(base) / "Lashy"
     d.mkdir(parents=True, exist_ok=True)
     return d / "setup_complete.flag"
 
@@ -70,7 +70,7 @@ class SetupWizard(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Clicky Setup")
+        self.setWindowTitle("Lashy Setup")
         self.setModal(False)
         self.setMinimumSize(600, 420)
         self.setStyleSheet("""
@@ -114,7 +114,7 @@ class SetupWizard(QDialog):
         layout.setContentsMargins(32, 28, 32, 24)
         layout.setSpacing(14)
 
-        self.title = QLabel("Welcome to Clicky")
+        self.title = QLabel("Welcome to Lashy")
         self.title.setObjectName("title")
         layout.addWidget(self.title)
 
@@ -176,14 +176,14 @@ class SetupWizard(QDialog):
         self.skip_btn.setText("Skip")
 
         if step == "welcome":
-            self.title.setText("Meet Clicky")
+            self.title.setText("Meet Lashy")
             self.subtitle.setText(
-                "Clicky is an AI tutor that lives next to your cursor and can see "
+                "Lashy is an AI tutor that lives next to your cursor and can see "
                 "your screen — so it can point at things instead of just describing "
                 "them.\n\n"
                 f"•  Hold {_pretty_hotkey()} anywhere in Windows, or just say "
-                "\"Clicky\", then ask your question out loud.\n"
-                "•  Clicky answers by speaking, and draws arrows, circles and "
+                "\"Lashy\", then ask your question out loud.\n"
+                "•  Lashy answers by speaking, and draws arrows, circles and "
                 "labels directly on your screen.\n"
                 "•  Ask it about whatever you're looking at — a PDF, an error "
                 "message, a chart, a settings page.\n"
@@ -242,7 +242,7 @@ class SetupWizard(QDialog):
             name = cfg.ollama_text_model
             self.title.setText("Download the text model")
             self.subtitle.setText(
-                f"Pulling {name} (≈2 GB). This is what answers when you ask Clicky "
+                f"Pulling {name} (≈2 GB). This is what answers when you ask Lashy "
                 f"a question."
             )
             self.action_btn.setText(f"Pull {name}")
@@ -259,7 +259,7 @@ class SetupWizard(QDialog):
             name = cfg.ollama_vision_model
             self.title.setText("Download the vision model (optional)")
             self.subtitle.setText(
-                f"Pulling {name} (≈3 GB). Needed only when Clicky reads your screen "
+                f"Pulling {name} (≈3 GB). Needed only when Lashy reads your screen "
                 f"— pointing, screenshots, reading charts. You can skip this and "
                 f"add it later from the tray."
             )
@@ -276,7 +276,7 @@ class SetupWizard(QDialog):
         elif step == "keys":
             self.title.setText("Add an API key")
             self.subtitle.setText(
-                "Paste a key for Claude, OpenAI or Gemini. Clicky saves it next to "
+                "Paste a key for Claude, OpenAI or Gemini. Lashy saves it next to "
                 "the app and starts using it right away — you can add, change or "
                 "remove keys later from Tray → Setup & Diagnostics → API Keys."
             )
@@ -290,13 +290,13 @@ class SetupWizard(QDialog):
             self.title.setText("All set 🎉")
             providers = cfg.describe()
             self.subtitle.setText(
-                f"Clicky is ready, running on {providers['llm']}.\n\n"
-                f"•  Hold {_pretty_hotkey()} and speak, or say \"Clicky\".\n"
+                f"Lashy is ready, running on {providers['llm']}.\n\n"
+                f"•  Hold {_pretty_hotkey()} and speak, or say \"Lashy\".\n"
                 "•  Press Esc to cut a long answer short.\n"
                 "•  Right-click the tray icon for modes, models and settings.\n"
                 "•  Drag a PDF onto the panel to ask questions about it."
             )
-            self.action_btn.setText("Start using Clicky")
+            self.action_btn.setText("Start using Lashy")
             self.skip_btn.hide()
             mark_setup_complete()
 
@@ -486,7 +486,7 @@ def maybe_show_setup_wizard(parent=None) -> SetupWizard | None:
     """Open the wizard on first run.
 
     Unlike 1.2.0 this shows even when Ollama is already healthy — a silent
-    first launch left new users with no idea what Clicky was or how to talk to
+    first launch left new users with no idea what Lashy was or how to talk to
     it. The Ollama steps still skip themselves when there's nothing to do.
     """
     if setup_already_ran():

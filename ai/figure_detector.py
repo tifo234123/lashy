@@ -1,8 +1,8 @@
 """
-Local geometric-figure detector — the "eyes" behind Clicky's drawing accuracy.
+Local geometric-figure detector — the "eyes" behind Lashy's drawing accuracy.
 
 Vision LLMs are unreliable at pixel localization (especially small local
-models), so Clicky doesn't trust them with coordinates. This module finds
+models), so Lashy doesn't trust them with coordinates. This module finds
 geometric figures (triangles, rectangles, circles, polygons) on the screen
 with classic OpenCV contour analysis and hands the LLM their EXACT vertices,
 pre-normalized to the 0-1000 tag coordinate space. The LLM only has to echo
@@ -10,7 +10,7 @@ numbers — which every model can do — and the manager additionally snaps any
 sloppy stroke endpoints to the nearest detected vertex.
 
 Runs entirely on CPU in ~50-150 ms on a 1280-wide screenshot. If OpenCV is
-not installed, detection silently returns nothing and Clicky falls back to
+not installed, detection silently returns nothing and Lashy falls back to
 pure LLM localization.
 """
 
@@ -23,7 +23,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Tuple
 
-log = logging.getLogger("clicky.figures")
+log = logging.getLogger("lashy.figures")
 
 
 @dataclass
@@ -129,7 +129,7 @@ def figures_prompt(figs: List[Figure]) -> str:
     if not figs:
         return ""
     lines = [
-        "\n\nDETECTED FIGURES (found by Clicky's local vision, coordinates are "
+        "\n\nDETECTED FIGURES (found by Lashy's local vision, coordinates are "
         "EXACT and already normalized 0-1000 — when teaching about one of "
         "these, you MUST build your drawing tags from these vertices verbatim "
         "instead of estimating):"

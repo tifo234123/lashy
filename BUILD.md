@@ -1,11 +1,11 @@
-﻿# Building Clicky.exe for Windows
+﻿# Building Lashy.exe for Windows
 
-Two ways to package Clicky for your friend's laptop:
+Two ways to package Lashy for your friend's laptop:
 
 | Method | Output | Size | Install | Best for |
 |---|---|---|---|---|
-| **Portable folder** | `dist\Clicky\` | ~400-600 MB | Copy the folder, double-click `Clicky.exe` | Quick testing, USB stick |
-| **Setup installer** | `Setup-Clicky.exe` | ~200-400 MB | Double-click, Next, Finish | Polished distribution |
+| **Portable folder** | `dist\Lashy\` | ~400-600 MB | Copy the folder, double-click `Lashy.exe` | Quick testing, USB stick |
+| **Setup installer** | `Setup-Lashy.exe` | ~200-400 MB | Double-click, Next, Finish | Polished distribution |
 
 ---
 
@@ -17,30 +17,30 @@ build.bat
 
 That's it. After 2-5 minutes:
 ```
-dist\Clicky\Clicky.exe    â† hand this whole folder to your friend
+dist\Lashy\Lashy.exe    â† hand this whole folder to your friend
 ```
 
 Your friend:
-1. Copies the `Clicky` folder anywhere on their PC
-2. (Optional) creates `.env` next to `Clicky.exe` with their API keys â€” see `.env.example`
-3. Double-clicks `Clicky.exe`
-4. Tray icon appears, Clicky is running
+1. Copies the `Lashy` folder anywhere on their PC
+2. (Optional) creates `.env` next to `Lashy.exe` with their API keys â€” see `.env.example`
+3. Double-clicks `Lashy.exe`
+4. Tray icon appears, Lashy is running
 
 **No Python needed on their machine.** Everything is bundled.
 
 ---
 
-## Full installer (`Setup-Clicky.exe`)
+## Full installer (`Setup-Lashy.exe`)
 
 1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php) (free)
 2. Run:
    ```bat
    build.bat installer
    ```
-3. Output: `dist\Setup-Clicky.exe` â€” a single self-extracting installer
+3. Output: `dist\Setup-Lashy.exe` â€” a single self-extracting installer
 
-Your friend runs `Setup-Clicky.exe`:
-- Pick install location (default: `C:\Program Files\Clicky`)
+Your friend runs `Setup-Lashy.exe`:
+- Pick install location (default: `C:\Program Files\Lashy`)
 - Choose: desktop shortcut? launch on Windows startup?
 - Next â†’ Install â†’ Finish
 - Uninstall works through Windows Settings like any other app
@@ -63,7 +63,7 @@ Your friend runs `Setup-Clicky.exe`:
 
 ## First-run checklist for your friend
 
-When they launch `Clicky.exe` the first time:
+When they launch `Lashy.exe` the first time:
 
 1. **Windows SmartScreen warning** (blue popup)
    - Click "More info" â†’ "Run anyway"
@@ -98,7 +98,7 @@ Then re-run `build.bat`.
 **`ImportError: DLL load failed` at runtime on friend's PC**
 - Friend needs [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) (usually already installed on Windows 10/11)
 
-**Antivirus flags Clicky.exe**
+**Antivirus flags Lashy.exe**
 - False positive â€” PyInstaller bundles are sometimes flagged because they self-extract
 - Add an exclusion for the install folder, or code-sign the binary
 
@@ -120,8 +120,8 @@ To avoid the Windows SmartScreen warning, you need an **Authenticode code-signin
 1. Buy one from Sectigo / DigiCert / SSL.com (~$80-400/year)
 2. After `build.bat`, sign both files:
    ```bat
-   signtool sign /f mycert.pfx /p PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 dist\Clicky\Clicky.exe
-   signtool sign /f mycert.pfx /p PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 dist\Setup-Clicky.exe
+   signtool sign /f mycert.pfx /p PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 dist\Lashy\Lashy.exe
+   signtool sign /f mycert.pfx /p PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 dist\Setup-Lashy.exe
    ```
 
 For testing with friends this is overkill â€” just tell them to click "Run anyway".
@@ -134,11 +134,11 @@ For testing with friends this is overkill â€” just tell them to click "Run 
 clicky-windows/
 â”œâ”€â”€ build/              â† PyInstaller scratch (safe to delete)
 â””â”€â”€ dist/
-    â”œâ”€â”€ Clicky/         â† portable folder â€” give this to friends
-    â”‚   â”œâ”€â”€ Clicky.exe
+    â”œâ”€â”€ Lashy/         â† portable folder â€” give this to friends
+    â”‚   â”œâ”€â”€ Lashy.exe
     â”‚   â”œâ”€â”€ _internal/  â† bundled Python + libs (~500 MB)
     â”‚   â”œâ”€â”€ .env.example
     â”‚   â”œâ”€â”€ LICENSE
     â”‚   â””â”€â”€ README.md
-    â””â”€â”€ Setup-Clicky.exe â† single-file installer (if you built with installer flag)
+    â””â”€â”€ Setup-Lashy.exe â† single-file installer (if you built with installer flag)
 ```

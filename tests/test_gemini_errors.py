@@ -13,7 +13,7 @@ class GeminiErrors(unittest.IsolatedAsyncioTestCase):
    return httpx.Response(503,request=request)
   provider._client=httpx.AsyncClient(transport=httpx.MockTransport(unavailable))
   try:
-   with self.assertLogs('clicky.gemini',level='WARNING'):
+   with self.assertLogs('lashy.gemini',level='WARNING'):
     with self.assertRaises(RuntimeError):
      async for _ in provider.stream_response('hello',[],[],'test',model='gemini-3.8-flash'):pass
    self.assertEqual(requested,['/v1beta/models/gemini-3.8-flash:streamGenerateContent'])
@@ -25,7 +25,7 @@ class GeminiErrors(unittest.IsolatedAsyncioTestCase):
   provider._api_key='private-test-key'
   provider._client=httpx.AsyncClient(transport=httpx.MockTransport(lambda request:httpx.Response(503,request=request)))
   try:
-   with self.assertLogs('clicky.gemini',level='WARNING') as log:
+   with self.assertLogs('lashy.gemini',level='WARNING') as log:
     with self.assertRaises(RuntimeError) as error:
      async for _ in provider.stream_response('hello',[],[],'test'):pass
    self.assertIn('temporarily unavailable',str(error.exception))

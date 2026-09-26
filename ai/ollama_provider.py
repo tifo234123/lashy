@@ -34,7 +34,7 @@ def _explain_ollama_error(status: int, body: str, model: str, had_images: bool) 
     # Sending images to a text-only model: Ollama answers 400 with this text.
     if "does not support multimodal" in low or "multimodal data provided" in low:
         return (
-            "'{m}' is a text-only model, but Clicky sends a screenshot with "
+            "'{m}' is a text-only model, but Lashy sends a screenshot with "
             "every question.\n\n"
             "Choose a vision model under Tray -> Ollama -> Vision model, or "
             "pull one:\n"

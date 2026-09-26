@@ -1,5 +1,5 @@
 """
-Clicky's blue buddy cursor — faithful port of the original macOS overlay.
+Lashy's blue buddy cursor — faithful port of the original macOS overlay.
 
 Matches clicky-main/leanring-buddy/OverlayWindow.swift:
   - Flat solid blue equilateral triangle (#3380FF), 16×16, rotated -35°
@@ -43,7 +43,7 @@ TRI_ROTATION_DEG = -35.0
 CURSOR_BLUE = QColor(0x33, 0x80, 0xFF)
 
 # Teaching-annotation palette. The LLM picks colors by name; default is the
-# Clicky blue. Chosen for contrast on both light and dark content.
+# Lashy blue. Chosen for contrast on both light and dark content.
 ANNOT_COLORS = {
     "blue":   QColor(0x33, 0x80, 0xFF),
     "red":    QColor(0xFF, 0x45, 0x55),
@@ -201,7 +201,7 @@ class CursorOverlay(QWidget):
         # When True, dwell never expires — manager releases after TTS finishes
         self._hold_dwell: bool = False
 
-        # Slow mode — doubles flight + dwell so Clicky feels more like a teacher
+        # Slow mode — doubles flight + dwell so Lashy feels more like a teacher
         self._slow_mode: bool = False
 
         # Optional highlight ring around detected element (x, y, radius)
@@ -281,7 +281,7 @@ class CursorOverlay(QWidget):
     def set_point_hold(self, hold: bool):
         """Called by manager when TTS starts (True) / ends (False).
         While held, dwell never auto-expires — the buddy stays on the element
-        the entire time Clicky speaks."""
+        the entire time Lashy speaks."""
         self._hold_dwell = hold
         if hold and self._flight_phase == _PHASE_DWELLING:
             self._dwell_until = float("inf")
@@ -344,7 +344,7 @@ class CursorOverlay(QWidget):
 
     def _active_stroke_tip(self):
         """Pen tip of the currently-animating shape, or None. The buddy
-        rides this point so Clicky visibly draws each stroke."""
+        rides this point so Lashy visibly draws each stroke."""
         now = time.monotonic()
         active = None
         for ann in self._annotations:

@@ -10,7 +10,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 ## Steps to reproduce
-1. Open Clicky
+1. Open Lashy
 2. Do '...'
 3. See error
 
@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain the problem.
 
 ## Environment
 - **OS**: Windows 10 / 11 (build number if known)
-- **Clicky version**: (e.g. v1.1.2)
+- **Lashy version**: (e.g. v1.1.2)
 - **Python version** (if running from source): 
 - **AI provider**: Ollama / OpenAI / Anthropic / Gemini
 - **Ollama model** (if applicable): 

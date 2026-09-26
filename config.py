@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Where the user-editable .env lives. In the PyInstaller build, __file__ is
 # inside the bundle's _internal\ directory but users (and the installer) put
-# .env next to Clicky.exe at the install root — reading _HERE from __file__
+# .env next to Lashy.exe at the install root — reading _HERE from __file__
 # there meant .env edits were silently ignored (GitHub issue #3).
 if getattr(sys, "frozen", False):
     _HERE = Path(sys.executable).parent
@@ -20,6 +20,18 @@ for _name in (".env", ".env.local"):
     _p = _HERE / _name
     if _p.exists():
         load_dotenv(_p, override=True)
+
+
+def env_get(name: str, default: str = "") -> str:
+    """Read LASHY_<name>, falling back to the older CLICKY_ spelling.
+
+    Installs from before the rename still carry CLICKY_* lines in .env;
+    those keep working unchanged.
+    """
+    val = os.environ.get(f"LASHY_{name}")
+    if val is None:
+        val = os.environ.get(f"CLICKY_{name}")
+    return val if val is not None else default
 
 
 DEFAULT_SYSTEM_PROMPT = """You are Lashy, a high-performance, proactive, and intelligent AI companion and desktop assistant running natively on Linux Mint (Cinnamon desktop, X11). You live next to the user's cursor on screen.
@@ -107,7 +119,7 @@ CORE DIRECTIVES:
      Be direct, fast, and helpful. Use clean Markdown (bolding, inline code, bullet points). Always deliver working solutions tailored specifically for Linux Mint."""
 
 
-# Technical rules Clicky needs to actually draw on screen, point at
+# Technical rules Lashy needs to actually draw on screen, point at
 # elements, and execute system actions.
 _TECHNICAL_RULES = """
 
@@ -209,23 +221,24 @@ class Config:
 
     # App
     # Push-to-talk. Two-key modifier combo — no clash with app shortcuts and
-    # easier to hold than a 3-key chord. Override with CLICKY_HOTKEY in .env.
-    hotkey: str = field(default_factory=lambda: os.getenv("CLICKY_HOTKEY", "ctrl+win"))
+    # easier to hold than a 3-key chord. Override with LASHY_HOTKEY in .env
+    # (the older CLICKY_HOTKEY spelling still works).
+    hotkey: str = field(default_factory=lambda: env_get("HOTKEY", "ctrl+win"))
 
     # Microphone mode:
     #   "hotkey"  (default) — mic opens only while you're asking something.
-    #             Tap the hotkey and speak; Clicky answers when you stop
+    #             Tap the hotkey and speak; Lashy answers when you stop
     #             talking. Holding it also works and ends on release.
-    #   "ambient" — legacy always-on mic with "Clicky" wake-word detection.
+    #   "ambient" — legacy always-on mic with "Lashy" wake-word detection.
     #             Costs a continuous Whisper pass over everything it hears.
     mic_mode: str = field(default_factory=lambda: (
-        os.getenv("CLICKY_MIC_MODE", "hotkey").strip().lower() or "hotkey"
+        env_get("MIC_MODE", "hotkey").strip().lower() or "hotkey"
     ))
 
     # How long a tap may last before it counts as a hold. Under this, releasing
     # the key does NOT stop the recording — silence detection does.
     tap_max_seconds: float = field(default_factory=lambda: float(
-        os.getenv("CLICKY_TAP_MAX_SECONDS", "0.6") or 0.6
+        env_get("TAP_MAX_SECONDS", "0.6") or 0.6
     ))
 
     def ambient_mic(self) -> bool:
@@ -236,15 +249,15 @@ class Config:
         """Persisted switch between hotkey-only and always-listening."""
         mode = "ambient" if mode == "ambient" else "hotkey"
         self.mic_mode = mode
-        os.environ["CLICKY_MIC_MODE"] = mode
-        self._write_env("CLICKY_MIC_MODE", mode)
+        os.environ["LASHY_MIC_MODE"] = mode
+        self._write_env("LASHY_MIC_MODE", mode)
 
     def llm_provider(self) -> str:
         """Returns the active LLM provider (runtime override > priority chain).
 
         Priority chain: Claude > OpenAI > GitHub Copilot > Gemini > Ollama.
         """
-        override = os.environ.get("CLICKY_ACTIVE_LLM", "").strip().lower()
+        override = env_get("ACTIVE_LLM", "").strip().lower()
         if override in self.available_llm_providers():
             return override
         if self.anthropic_api_key:
@@ -298,12 +311,12 @@ class Config:
     def set_active_llm(self, name: str) -> None:
         """Runtime switch — next query uses this provider. Persisted to .env."""
         name = name.lower()
-        os.environ["CLICKY_ACTIVE_LLM"] = name
+        os.environ["LASHY_ACTIVE_LLM"] = name
         # Write to .env so the choice survives restarts
         env_path = _HERE / ".env"
         try:
             lines = env_path.read_text(encoding="utf-8").splitlines(keepends=True) if env_path.exists() else []
-            key = "CLICKY_ACTIVE_LLM"
+            key = "LASHY_ACTIVE_LLM"
             found = False
             for i, line in enumerate(lines):
                 if line.startswith(key + "=") or line.startswith(key + " ="):
@@ -319,7 +332,7 @@ class Config:
     # ── API key management ───────────────────────────────────────────────
     #
     # Keys used to be .env-only, which meant a packaged install had no way to
-    # enter one short of hand-editing a file next to Clicky.exe. These helpers
+    # enter one short of hand-editing a file next to Lashy.exe. These helpers
     # back the Settings → API Keys dialog.
 
     # env var name → (dataclass attribute, human label)
@@ -334,7 +347,7 @@ class Config:
 
     @staticmethod
     def env_path() -> Path:
-        """The .env Clicky reads and writes — next to Clicky.exe when frozen."""
+        """The .env Lashy reads and writes — next to Lashy.exe when frozen."""
         return _HERE / ".env"
 
     def get_api_key(self, env_var: str) -> str:
@@ -391,12 +404,15 @@ class Config:
         Used when the key behind a pinned provider is removed — otherwise
         llm_provider() keeps naming a provider that can no longer answer.
         """
+        os.environ.pop("LASHY_ACTIVE_LLM", None)
+        # Also clear the pre-rename spelling so it can't resurrect the pin.
         os.environ.pop("CLICKY_ACTIVE_LLM", None)
+        self._write_env("LASHY_ACTIVE_LLM", "")
         self._write_env("CLICKY_ACTIVE_LLM", "")
 
     def stt_provider(self) -> str:
         # Allow explicit override via env (so users can force whisper_cpp etc.)
-        forced = os.getenv("CLICKY_STT", "").strip().lower()
+        forced = env_get("STT", "").strip().lower()
         if forced in ("deepgram", "openai", "whisper_cpp", "faster_whisper"):
             return forced
         if self.deepgram_api_key:
@@ -442,12 +458,12 @@ class Config:
     def get_ollama_model(self, kind: str = "vision") -> str:
         """Return the active model for the given kind ("vision" | "text").
 
-        Reads runtime override from CLICKY_OLLAMA_VISION_MODEL /
-        CLICKY_OLLAMA_TEXT_MODEL first, then the dataclass field, then the
+        Reads runtime override from LASHY_OLLAMA_VISION_MODEL /
+        LASHY_OLLAMA_TEXT_MODEL first, then the dataclass field, then the
         legacy single-model knob.
         """
-        env_key = "CLICKY_OLLAMA_VISION_MODEL" if kind == "vision" else "CLICKY_OLLAMA_TEXT_MODEL"
-        runtime = os.environ.get(env_key, "").strip()
+        env_key = "LASHY_OLLAMA_VISION_MODEL" if kind == "vision" else "LASHY_OLLAMA_TEXT_MODEL"
+        runtime = (os.environ.get(env_key) or os.environ.get(env_key.replace("LASHY_", "CLICKY_"), "")).strip()
         if runtime:
             return runtime
         return self.ollama_vision_model if kind == "vision" else self.ollama_text_model
@@ -456,7 +472,7 @@ class Config:
         """Runtime switch for vision/text Ollama model. Persists for the session."""
         if kind not in ("vision", "text"):
             return
-        env_key = "CLICKY_OLLAMA_VISION_MODEL" if kind == "vision" else "CLICKY_OLLAMA_TEXT_MODEL"
+        env_key = "LASHY_OLLAMA_VISION_MODEL" if kind == "vision" else "LASHY_OLLAMA_TEXT_MODEL"
         os.environ[env_key] = (name or "").strip()
         # Mirror onto the dataclass so describe() picks it up immediately
         if kind == "vision":

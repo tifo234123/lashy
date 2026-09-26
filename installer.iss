@@ -1,21 +1,21 @@
 ; ────────────────────────────────────────────────────────────────────
-;  Clicky for Windows — Inno Setup script
+;  Lashy — Inno Setup script
 ;
-;  Builds a single Setup-Clicky.exe from the PyInstaller dist folder.
+;  Builds a single Setup-Lashy.exe from the PyInstaller dist folder.
 ;
 ;  Prerequisites:
-;    1. Run  build.bat  first (produces dist\Clicky\)
+;    1. Run  build.bat  first (produces dist\Lashy\)
 ;    2. Install Inno Setup 6 from https://jrsoftware.org/isdl.php
 ;    3. Run:  iscc installer.iss
 ;
-;  Output:  dist\Setup-Clicky.exe   (single-file installer, ~200-400 MB)
+;  Output:  dist\Setup-Lashy.exe   (single-file installer, ~200-400 MB)
 ; ────────────────────────────────────────────────────────────────────
 
-#define MyAppName        "Clicky"
+#define MyAppName        "Lashy"
 #define MyAppVersion     "1.4.4"
 #define MyAppPublisher   "Shashank Singh"
 #define MyAppURL         "https://github.com/Bitshank-2338/clicky-windows"
-#define MyAppExeName     "Clicky.exe"
+#define MyAppExeName     "Lashy.exe"
 
 [Setup]
 AppId={{9A4E3F2C-7B1D-4A8F-9C6E-3D7F1B5E9A0C}
@@ -29,7 +29,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE
 OutputDir=dist
-OutputBaseFilename=Setup-Clicky
+OutputBaseFilename=Setup-Lashy
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -47,7 +47,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon";  Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"
-Name: "startupicon";  Description: "Launch Clicky when Windows &starts";  GroupDescription: "Additional shortcuts:"; Flags: unchecked
+Name: "startupicon";  Description: "Launch Lashy when Windows &starts";  GroupDescription: "Additional shortcuts:"; Flags: unchecked
 ; Only offered when Ollama isn't already on the machine. Previously this task
 ; was checked by default with no detection at all, so every install spent
 ; 12-15 minutes re-downloading and re-running OllamaSetup.exe over a perfectly
@@ -56,7 +56,7 @@ Name: "installollama"; Description: "Also download && install Ollama (free local
 
 [Files]
 ; Everything PyInstaller produced
-Source: "dist\Clicky\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\Lashy\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}";                    Filename: "{app}\{#MyAppExeName}"
@@ -91,7 +91,7 @@ Filename: "{tmp}\OllamaSetup.exe"; \
   Tasks: installollama; \
   Flags: waituntilterminated skipifdoesntexist
 
-; Offer to launch Clicky after install
+; Offer to launch Lashy after install
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [Code]
@@ -119,17 +119,17 @@ begin
   begin
     if OllamaPresent then
       MsgBox(
-        'Clicky installed successfully!' #13#13
+        'Lashy installed successfully!' #13#13
         'Ollama is already installed on this PC, so nothing was downloaded.' #13
-        'Clicky will use it automatically.' #13#13
+        'Lashy will use it automatically.' #13#13
         'On first launch you''ll get a short intro and can add an API key for' #13
         'Claude, OpenAI or Gemini if you''d rather use a cloud model.',
         mbInformation, MB_OK
       )
     else
       MsgBox(
-        'Clicky installed successfully!' #13#13
-        'On first launch, Clicky will introduce itself and walk you through' #13
+        'Lashy installed successfully!' #13#13
+        'On first launch, Lashy will introduce itself and walk you through' #13
         'setting up a free local AI engine — no API key needed.' #13#13
         'Prefer Claude, OpenAI or Gemini? You can paste a key straight into' #13
         'the setup wizard, or later via Tray icon > Setup & Diagnostics >' #13

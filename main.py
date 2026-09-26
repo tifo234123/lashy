@@ -1,5 +1,5 @@
 """
-Clicky for Windows — Entry Point.
+Lashy — Entry Point.
 Boots Qt, spawns overlay+panel+tray, starts ambient mic listener, binds hotkey.
 """
 
@@ -104,17 +104,17 @@ def _copilot_login_flow(tray, panel, manager):
 
 
 def _setup_logging():
-    """Rotating runtime log at %LOCALAPPDATA%\\Clicky\\clicky.log — the #1
+    """Rotating runtime log at %LOCALAPPDATA%\\Lashy\\lashy.log — the #1
     ask from bug reports: with no log file, 'stuck on Listening' class issues
     were undiagnosable (GitHub issue #6)."""
     import logging
     from logging.handlers import RotatingFileHandler
 
-    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Clicky"
+    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Lashy"
     try:
         log_dir.mkdir(parents=True, exist_ok=True)
         handler = RotatingFileHandler(
-            log_dir / "clicky.log", maxBytes=1_000_000, backupCount=2,
+            log_dir / "lashy.log", maxBytes=1_000_000, backupCount=2,
             encoding="utf-8",
         )
         handler.setFormatter(logging.Formatter(
@@ -123,8 +123,8 @@ def _setup_logging():
         root = logging.getLogger()
         root.setLevel(logging.INFO)
         root.addHandler(handler)
-        logging.getLogger("clicky").info(
-            "=== Clicky starting (python %s) ===", sys.version.split()[0]
+        logging.getLogger("lashy").info(
+            "=== Lashy starting (python %s) ===", sys.version.split()[0]
         )
     except Exception:
         pass  # logging must never block startup
@@ -182,7 +182,7 @@ def main():
     # nobody knew a log existed.
     _log_hint = Path(
         os.environ.get("LOCALAPPDATA", Path.home())
-    ) / "Clicky" / "clicky.log"
+    ) / "Lashy" / "lashy.log"
     def _on_error(e):
         tray.show_notification("Lashy error", f"{e}\n\nFull details: {_log_hint}")
         panel.update_response(f"⚠️ Error: {e}")
@@ -275,7 +275,7 @@ def main():
     def _open_journal():
         import os, subprocess
         base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        path = os.path.join(base, "Clicky")
+        path = os.path.join(base, "Lashy")
         try:
             os.startfile(path)
         except Exception:
@@ -379,13 +379,13 @@ def main():
         import datetime, json, platform, traceback
         from ai import ollama_bootstrap as ob
         base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        out = Path(base) / "Clicky" / f"diagnostics-{datetime.datetime.now():%Y%m%d-%H%M%S}.txt"
+        out = Path(base) / "Lashy" / f"diagnostics-{datetime.datetime.now():%Y%m%d-%H%M%S}.txt"
         try:
             providers_d = cfg.describe()
         except Exception:
             providers_d = {}
         report = []
-        report.append(f"Clicky diagnostics — {datetime.datetime.now().isoformat()}")
+        report.append(f"Lashy diagnostics — {datetime.datetime.now().isoformat()}")
         report.append(f"Python: {sys.version.split()[0]}")
         report.append(f"Platform: {platform.platform()}")
         report.append(f"Active LLM: {providers_d.get('llm', '?')}")
@@ -423,10 +423,41 @@ def main():
 
     tray.on_quit.connect(lambda: (tray.hide_icon(), manager.shutdown(), app.quit()))
 
+    # ── Panel toggle (shared by Ctrl+Win tap and Ctrl+Alt+C) ──────────────────
+    def _toggle_panel():
+        if panel.isVisible() and panel.isActiveWindow():
+            panel.hide()
+        else:
+            panel.show()
+            panel.raise_()
+            panel.activateWindow()
+            if hasattr(panel, "_chat_input"):
+                panel._chat_input.setFocus()
+
     # ── Global hotkey ─────────────────────────────────────────────────────────
+    # Ctrl+Win does double duty, split by press duration:
+    #   tap  (<0.35 s) → open/close the chat panel
+    #   hold           → push-to-talk (release ends and processes)
+    # The mic capture starts optimistically on press; a tap rolls it back
+    # via cancel_tap_capture() before any audio is ever processed.
+    import time as _time
+    _hotkey_down_at = [0.0]
+    PANEL_TAP_SECONDS = 0.35
+
+    def _on_hotkey_press():
+        _hotkey_down_at[0] = _time.monotonic()
+        manager.on_hotkey_press()
+
+    def _on_hotkey_release():
+        held = _time.monotonic() - _hotkey_down_at[0]
+        if held < PANEL_TAP_SECONDS and manager.cancel_tap_capture(PANEL_TAP_SECONDS):
+            _toggle_panel()
+            return
+        manager.on_hotkey_release()
+
     hotkey = GlobalHotkeyMonitor(
-        on_press=manager.on_hotkey_press,
-        on_release=manager.on_hotkey_release,
+        on_press=_on_hotkey_press,
+        on_release=_on_hotkey_release,
     )
     if not hotkey.start():
         panel.set_status_text("Shortcut unavailable — use Hold to Talk")
@@ -446,15 +477,6 @@ def main():
     # Global shortcut Ctrl+Alt+C to toggle the chat panel anytime
     try:
         from pynput import keyboard as pynput_keyboard
-        def _toggle_panel():
-            if panel.isVisible() and panel.isActiveWindow():
-                panel.hide()
-            else:
-                panel.show()
-                panel.raise_()
-                panel.activateWindow()
-                if hasattr(panel, "_chat_input"):
-                    panel._chat_input.setFocus()
         _pynput_hk = pynput_keyboard.GlobalHotKeys({'<ctrl>+<alt>+c': _toggle_panel})
         _pynput_hk.daemon = True
         _pynput_hk.start()
@@ -467,10 +489,10 @@ def main():
     _hk = "+".join(p.strip().capitalize() for p in cfg.hotkey.split("+"))
     tray.show_notification(
         "Lashy is running",
-        (f"Say 'Clicky' or press {_hk}  |  LLM: {providers['llm']}"
+        (f"Say 'Lashy' or press {_hk}  |  LLM: {providers['llm']}"
          if cfg.ambient_mic() else
-         f"Press {_hk}, ask your question, and Lashy answers when you stop "
-         f"talking  |  LLM: {providers['llm']}"),
+         f"Hold {_hk} and speak — Lashy answers when you stop. "
+         f"Tap it to toggle the panel  |  LLM: {providers['llm']}"),
     )
 
     # ── First-run setup wizard ────────────────────────────────────────────────
@@ -480,7 +502,8 @@ def main():
         from ui.setup_wizard import maybe_show_setup_wizard, SetupWizard
 
         # Force-show via env var (handy for testing).
-        if os.environ.get("CLICKY_FORCE_SETUP", "").strip() in ("1", "true", "yes"):
+        from config import env_get
+        if env_get("FORCE_SETUP", "").strip() in ("1", "true", "yes"):
             wiz = SetupWizard()
             wiz.show()
             _setup_keepalive[0] = wiz

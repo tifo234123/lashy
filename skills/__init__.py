@@ -7,7 +7,7 @@ level:
     SKILL = {
         "name":        "Self Mode",
         "trigger":     r"(self ?mode|allow ?clicks|enable ?clicking)",
-        "description": "Lets Clicky click for you instead of pointing.",
+        "description": "Lets Lashy click for you instead of pointing.",
         "handler":     handle_self_mode,   # async fn(manager, transcript) -> str
     }
 
@@ -37,16 +37,16 @@ _loaded: list[dict] = []
 
 
 def _user_skills_dir() -> Path:
-    """User-level skills dir at ~/.clicky/skills/ — survives reinstall."""
-    return Path.home() / ".clicky" / "skills"
+    """User-level skills dir at ~/.lashy/skills/ — survives reinstall."""
+    return Path.home() / ".lashy" / "skills"
 
 
 def load_all() -> list[dict]:
-    """Discover + import every skill module in this package and ~/.clicky/skills."""
+    """Discover + import every skill module in this package and ~/.lashy/skills."""
     global _loaded
     _loaded = []
 
-    # Bundled skills (shipped with Clicky)
+    # Bundled skills (shipped with Lashy)
     here = Path(__file__).parent
     for f in here.glob("*.py"):
         if f.name.startswith("_"):
@@ -65,7 +65,7 @@ def load_all() -> list[dict]:
 def _try_import(path: Path) -> None:
     try:
         spec = importlib.util.spec_from_file_location(
-            f"clicky_skill_{path.stem}", str(path)
+            f"lashy_skill_{path.stem}", str(path)
         )
         if not spec or not spec.loader:
             return

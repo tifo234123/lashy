@@ -1,7 +1,7 @@
 """
 Ollama bootstrap utilities.
 
-Most users who hit "Clicky listens but won't answer" don't have Ollama
+Most users who hit "Lashy listens but won't answer" don't have Ollama
 installed (or installed it without pulling a model). This module:
 
   • Detects whether Ollama is running     → is_ollama_running()
@@ -89,7 +89,7 @@ def start_ollama_server() -> bool:
 
     Prefers `ollama app.exe` (the tray app, which supervises the server) and
     falls back to `ollama serve`. Detached + windowless so no console flashes
-    up behind Clicky.
+    up behind Lashy.
     """
     exe = find_ollama_binary()
     if exe is None:
@@ -98,7 +98,7 @@ def start_ollama_server() -> bool:
     app_exe = exe.with_name("ollama app.exe")
     cmd = [str(app_exe)] if app_exe.is_file() else [str(exe), "serve"]
 
-    # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP — outlives Clicky and never
+    # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP — outlives Lashy and never
     # shows a console window.
     creationflags = 0x00000008 | 0x00000200
     try:
@@ -216,7 +216,7 @@ def pull_model(
 
 def _default_installer_path() -> Path:
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-    d = Path(base) / "Clicky" / "downloads"
+    d = Path(base) / "Lashy" / "downloads"
     d.mkdir(parents=True, exist_ok=True)
     return d / "OllamaSetup.exe"
 
@@ -317,7 +317,7 @@ def _cli():
         return
 
     if cmd == "diag":
-        print("─── Clicky Ollama diagnostics ───")
+        print("─── Lashy Ollama diagnostics ───")
         print(f"Configured host:          {cfg.ollama_host}")
         print(f"Configured text model:    {cfg.ollama_text_model}")
         print(f"Configured vision model:  {cfg.ollama_vision_model}")

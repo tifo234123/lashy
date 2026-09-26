@@ -1,5 +1,5 @@
 """
-Generate a Clicky-blue icon.ico for the PyInstaller build.
+Generate a Lashy-blue icon.ico for the PyInstaller build.
 
 Produces assets/icon.ico with multiple sizes (16, 32, 48, 64, 128, 256) —
 Windows picks the right size for taskbar, file explorer, and installer.
@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 OUT = Path(__file__).parent / "icon.ico"
-BLUE = (0x33, 0x80, 0xFF, 255)     # Clicky cursor blue (#3380FF)
+BLUE = (0x33, 0x80, 0xFF, 255)     # Lashy cursor blue (#3380FF)
 
 
 def make_frame(size: int) -> Image.Image:

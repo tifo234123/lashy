@@ -1,6 +1,6 @@
-# Contributing to Clicky
+# Contributing to Lashy
 
-Thanks for your interest in contributing to Clicky! This guide will help you get started.
+Thanks for your interest in contributing to Lashy! This guide will help you get started.
 
 ## Getting Started
 

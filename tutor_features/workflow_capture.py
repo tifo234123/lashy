@@ -1,6 +1,6 @@
 """
 Workflow capture — record a sequence of clicks + keystrokes the user
-performs, then let Clicky explain or replay them.
+performs, then let Lashy explain or replay them.
 
 Status: foundation laid. Hotkey + recording loop work. Replay layer is
 intentionally a stub — playback of synthetic input is a security concern

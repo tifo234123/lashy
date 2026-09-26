@@ -1,8 +1,8 @@
 """
 Knowledge Journal + Spaced Repetition.
 
-Every Q&A Clicky has gets logged to a SQLite db at:
-    %LOCALAPPDATA%\\Clicky\\journal.db
+Every Q&A Lashy has gets logged to a SQLite db at:
+    %LOCALAPPDATA%\\Lashy\\journal.db
 
 Voice queries that surface this:
     "what did I learn today"            → today's entries
@@ -32,7 +32,7 @@ _INTERVALS_DAYS = (1, 3, 7, 14, 30, 60, 120)
 
 def _db_path() -> Path:
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-    d = Path(base) / "Clicky"
+    d = Path(base) / "Lashy"
     d.mkdir(parents=True, exist_ok=True)
     return d / "journal.db"
 

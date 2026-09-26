@@ -6,7 +6,7 @@ Each provider exposes a "list models" endpoint we hit on demand:
   • OpenAI:     GET /v1/models                    (key in Authorization)
   • Gemini:     GET /v1beta/models?key=...        (key in query)
 
-Cached per-provider to %LOCALAPPDATA%\\Clicky\\models_<provider>.json with a
+Cached per-provider to %LOCALAPPDATA%\\Lashy\\models_<provider>.json with a
 30-day TTL — long enough that you don't refetch constantly, short enough
 that new model releases land within a month without manual refresh.
 
@@ -32,7 +32,7 @@ CACHE_TTL_SECONDS = 30 * 24 * 60 * 60   # 30 days
 
 
 # Curated fallback lists — used when the live endpoint is unreachable AND
-# the on-disk cache is empty. Reasonable defaults so Clicky still works
+# the on-disk cache is empty. Reasonable defaults so Lashy still works
 # offline / on first run before refresh completes.
 _FALLBACKS: dict[str, list[dict]] = {
     "claude": [
@@ -55,7 +55,7 @@ _FALLBACKS: dict[str, list[dict]] = {
 
 def _data_dir() -> Path:
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-    d = Path(base) / "Clicky"
+    d = Path(base) / "Lashy"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -111,7 +111,7 @@ async def _fetch_openai() -> list[dict]:
     # known prefixes. Vision flag is true for the gpt-4o family + o3-vision.
     chat_prefixes = ("gpt-4", "gpt-5", "o1", "o3", "o4", "chatgpt-")
     # Models that match a chat prefix but are NOT chat-completion models —
-    # picking one of these makes Clicky silently stop responding (e.g.
+    # picking one of these makes Lashy silently stop responding (e.g.
     # "chatgpt-image-latest" generates images, it can't hold a conversation).
     non_chat_markers = ("image", "audio", "realtime", "tts", "transcribe",
                         "embed", "moderation", "dall", "instruct", "codex")

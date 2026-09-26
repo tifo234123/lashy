@@ -1,5 +1,5 @@
 """
-Curated registry of Ollama models recommended for Clicky, plus heuristics
+Curated registry of Ollama models recommended for Lashy, plus heuristics
 for classifying installed models as vision-capable or text-only.
 
 Why curated:

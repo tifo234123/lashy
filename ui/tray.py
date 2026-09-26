@@ -77,7 +77,7 @@ class TrayManager(QObject):
             f"Lashy - AI Companion\nPress {cfg.hotkey} and just talk"
         )
         self._search_enabled = True
-        # Mirrors the persisted mic mode — off by default, so Clicky only
+        # Mirrors the persisted mic mode — off by default, so Lashy only
         # listens while you're actually asking it something.
         self._wake_enabled = cfg.ambient_mic()
         self._response_language = ""
@@ -386,7 +386,7 @@ class TrayManager(QObject):
             )
 
     def _build_language_submenu(self, parent_menu: QMenu):
-        """Lets the user pin Clicky's reply language instead of relying on
+        """Lets the user pin Lashy's reply language instead of relying on
         (sometimes unreliable) auto-detect from the transcript."""
         from tutor_features.multilang import _LANG_VOICE
 
@@ -519,7 +519,7 @@ class TrayManager(QObject):
     def _toggle_wake(self, checked: bool):
         self._wake_enabled = checked
         self._wake_action.setText(
-            "Wake word 'Clicky': ON" if checked else "Wake word 'Clicky': OFF"
+            "Wake word 'Lashy': ON" if checked else "Wake word 'Lashy': OFF"
         )
         self.on_toggle_wake_word.emit(checked)
 

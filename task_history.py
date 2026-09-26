@@ -1,6 +1,6 @@
 """
-Task history manager for Clicky.
-Persists multi-step task plans, executed actions, and outcomes to ~/.clicky/task_history.json.
+Task history manager for Lashy.
+Persists multi-step task plans, executed actions, and outcomes to ~/.lashy/task_history.json.
 """
 
 from __future__ import annotations
@@ -13,11 +13,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-_log = logging.getLogger("clicky.history")
+_log = logging.getLogger("lashy.history")
 
 
 def _get_history_file() -> Path:
-    p = Path.home() / ".clicky" / "task_history.json"
+    p = Path.home() / ".lashy" / "task_history.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 

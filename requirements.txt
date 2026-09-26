@@ -23,7 +23,7 @@ av>=12.0.0
 faster-whisper>=1.0.0
 
 # STT - whisper.cpp via pywhispercpp (3-5x faster, same engine as Handy)
-# Optional — if installed, Clicky auto-picks this over faster-whisper.
+# Optional — if installed, Lashy auto-picks this over faster-whisper.
 # pywhispercpp>=1.2.0
 
 # TTS - free
@@ -52,7 +52,7 @@ pytesseract>=0.3.10
 # Multilingual auto-detect
 langdetect>=1.0.9
 
-# Lesson recording (MP4 capture of the screen + Clicky's annotations)
+# Lesson recording (MP4 capture of the screen + Lashy's annotations)
 imageio>=2.34.0
 imageio-ffmpeg>=0.5.0
 

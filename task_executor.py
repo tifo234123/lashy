@@ -13,7 +13,7 @@ from task_history import task_history
 from response_policy import execution_guidance, settle_delay
 from audio.streaming_narration import TAGS, PARTIAL
 
-_log = logging.getLogger('clicky.executor')
+_log = logging.getLogger('lashy.executor')
 ACTION_RE = re.compile(r'\[(EXEC|TYPE|KEY|CLICK|WAIT)(?::([^\]]*))?\]')
 CONTROL_RE = re.compile(r'\[(?:STEP|PLAN|PROGRESS|BLOCKED):[^\]]*\]|\[DONE\]')
 FOLLOWUP_RE = re.compile(

@@ -1,7 +1,7 @@
 """
 PDF / document context.
 
-Drag a PDF onto the Clicky panel → its text is extracted and held as context
+Drag a PDF onto the Lashy panel → its text is extracted and held as context
 for the next question. *"Explain page 3 of my chemistry notes"* works because
 the extracted text is appended to the system prompt.
 

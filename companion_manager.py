@@ -1,5 +1,5 @@
 """
-Central state machine for Clicky Windows.
+Central state machine for Lashy Windows.
 
 Orchestrates:
   hotkey / wake-word → ambient listener capture → STT → screen capture
@@ -35,7 +35,7 @@ from tutor_features import (
 )
 import skills as skills_pkg
 
-_log = logging.getLogger("clicky.manager")
+_log = logging.getLogger("lashy.manager")
 
 
 def _ensure_ollama_running():
@@ -114,7 +114,7 @@ def _build_system_prompt(
 
     # ── Quiz mode: dominant prompt that completely replaces normal behaviour ──
     if quiz_mode:
-        return f"""You are Clicky, an interactive QUIZ TUTOR. The user has
+        return f"""You are Lashy, an interactive QUIZ TUTOR. The user has
 turned on Quiz Mode and wants to be tested, NOT explained to.
 
 {chr(10).join(ctx_lines)}
@@ -247,7 +247,7 @@ ANY_TAG_RE   = re.compile(
 )
 ANY_PARTIAL_RE = re.compile(r'\[[A-Z]{0,9}(?::[^\]]*)?$')
 
-# Questions that ask Clicky to locate / click UI elements — triggers the
+# Questions that ask Lashy to locate / click UI elements — triggers the
 def _is_action_task(transcript: str) -> bool:
     from task_executor import is_task_followup
     t = transcript.lower().strip()
@@ -397,7 +397,7 @@ class CompanionManager(QObject):
         self._win_poll_timer.timeout.connect(self._poll_active_window)
         self._win_poll_timer.start(500)
 
-        # Load user-created skills from skills/ + ~/.clicky/skills/
+        # Load user-created skills from skills/ + ~/.lashy/skills/
         try:
             skills_pkg.load_all()
         except Exception:
@@ -420,7 +420,7 @@ class CompanionManager(QObject):
             from tutor import active_window_id, active_window_title
             wid = active_window_id()
             name = active_window_title()
-            if wid and "clicky" not in name.lower() and "lashy" not in name.lower() and name.strip():
+            if wid and "lashy" not in name.lower() and "clicky" not in name.lower() and name.strip():
                 self._target_window_id = wid
                 self._target_window_title = name
         except Exception:
@@ -688,6 +688,31 @@ class CompanionManager(QObject):
             return
         if self._claim_end():
             self._submit(self._end_capture_and_process())
+
+    def cancel_tap_capture(self, max_seconds: float = 0.35) -> bool:
+        """Quietly cancel a capture that a hotkey TAP just opened.
+
+        A short press of Ctrl+Win now toggles the panel instead of talking,
+        so the mic capture that on_hotkey_press() optimistically started has
+        to be rolled back. Bumps the capture id so the silence watchdog
+        (already submitted) returns without ever processing audio.
+
+        Returns True when a LISTENING capture within the tap window was
+        cancelled; False means the press wasn't ours to cancel.
+        """
+        if self._state != AppState.LISTENING:
+            return False
+        if time.monotonic() - getattr(self, "_hotkey_pressed_at", 0.0) >= max_seconds:
+            return False
+        self._ptt_held = False
+        self._capture_id = getattr(self, "_capture_id", 0) + 1
+        self._end_claimed = True
+        try:
+            self._listener.stop_recording()
+        except Exception:
+            pass
+        self._emit_state(AppState.IDLE)
+        return True
 
     def _handle_wake(self):
         """Triggered from ambient listener when wake-word is detected."""
@@ -1860,7 +1885,7 @@ class CompanionManager(QObject):
             self._retire_llm()
 
     def set_custom_instructions(self, text: str):
-        """Tray callback — restrict/steer what Clicky helps with. Persists
+        """Tray callback — restrict/steer what Lashy helps with. Persists
         to .env so it survives a restart, not just this session."""
         cfg.custom_instructions = text.strip()
         try:
@@ -1895,7 +1920,7 @@ class CompanionManager(QObject):
         self._stt = None
 
     def set_response_language(self, code: str):
-        """Tray callback — pin Clicky's reply language ('' = auto-detect)."""
+        """Tray callback — pin Lashy's reply language ('' = auto-detect)."""
         cfg.response_language = code
         try:
             from dotenv import set_key
@@ -1952,7 +1977,7 @@ class CompanionManager(QObject):
         """Tray toggle — switches between always-listening and hotkey-only.
 
         ON keeps the mic open and runs a Whisper pass over everything it hears
-        to catch "Clicky". OFF (the default) leaves the mic closed until you
+        to catch "Lashy". OFF (the default) leaves the mic closed until you
         press the hotkey, which is both quieter on CPU and less invasive.
         """
         cfg.set_mic_mode("ambient" if enabled else "hotkey")

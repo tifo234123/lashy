@@ -1,21 +1,21 @@
-# Clicky for Windows 🔵
+# Lashy 🔵
 
 > **An AI teaching companion that lives next to your cursor.**
 > Ask it anything about your screen — it points, explains, and guides you step-by-step, like a real tutor sitting beside you.
 
-Clicky is a Windows port of [farzaa/clicky](https://github.com/farzaa/clicky) (originally macOS/SwiftUI). Built with **Python 3.11+ and PyQt6**, runs fully in the background, and works with every major AI provider.
+Lashy is a Windows port of [farzaa/clicky](https://github.com/farzaa/clicky) (originally macOS/SwiftUI). Built with **Python 3.11+ and PyQt6**, runs fully in the background, and works with every major AI provider.
 
 ---
 
-## Hi, this is Clicky 👋
+## Hi, this is Lashy 👋
 
-[![Watch the demo](assets/clicky-demo.gif)](https://youtu.be/WYY9yJHDaEU)
+[![Watch the demo](assets/lashy-demo.gif)](https://youtu.be/WYY9yJHDaEU)
 
 > 🎬 **[Watch full demo on YouTube →](https://youtu.be/WYY9yJHDaEU)**
 
-Clicky is a little AI buddy that **lives next to your cursor**. Hold a hotkey, ask it something about your screen, and it talks back — pointing at buttons, walking you through steps, drawing arrows on your screen. Think of it as a patient tutor sitting beside you while you learn anything: video editing, coding, a new app, whatever.
+Lashy is a little AI buddy that **lives next to your cursor**. Hold a hotkey, ask it something about your screen, and it talks back — pointing at buttons, walking you through steps, drawing arrows on your screen. Think of it as a patient tutor sitting beside you while you learn anything: video editing, coding, a new app, whatever.
 
-No more Alt-Tab to ChatGPT. No more typing out descriptions of what's on your screen. Just hold **Ctrl + Win**, speak, and Clicky handles the rest.
+No more Alt-Tab to ChatGPT. No more typing out descriptions of what's on your screen. Just hold **Ctrl + Win**, speak, and Lashy handles the rest.
 
 Works **100% offline** with Ollama or LM Studio, or plug in your Claude / OpenAI / Gemini / GitHub Copilot key for the full experience.
 
@@ -27,11 +27,11 @@ Works **100% offline** with Ollama or LM Studio, or plug in your Claude / OpenAI
 ┌─────────────────────────────────────────────┐
 │  Your screen (browser, IDE, Premiere, etc.) │
 │                                             │
-│          🔵◂ ← Clicky, your blue buddy      │
+│          🔵◂ ← Lashy, your blue buddy      │
 │          (floats beside your real cursor)   │
 │                                             │
 │  ┌───────────────────────────┐              │
-│  │  Clicky  [Claude]     —   │  ← panel     │
+│  │  Lashy  [Claude]     —   │  ← panel     │
 │  │  ● Thinking…              │              │
 │  │  "The search bar is       │              │
 │  │   right here ↗"           │              │
@@ -47,8 +47,9 @@ The blue triangle sits **35 px right / 25 px below** your real cursor. When you 
 ## Feature List
 
 ### 🎙️ Voice Activation
-- Hold **Ctrl + Win** and speak — or tap it once and talk; Clicky answers when you stop
-- The mic stays closed until you press it. For hands-free, turn on the **"Clicky"** wake word from the tray
+- Hold **Ctrl + Win** and speak — Lashy answers when you stop
+- **Tap** **Ctrl + Win** to open or close the chat panel
+- The mic stays closed until you press it. For hands-free, turn on the **"Lashy"** wake word from the tray
 - Press **Esc** to stop any response or TTS mid-stream
 
 ### 👁️ Screen Aware
@@ -124,18 +125,18 @@ Switch mid-session from the system tray — takes about a second, no restart nee
 - Every Q&A automatically logged to a local SQLite database
 - Ask **"what did we cover today?"** → summary of today's session
 - Ask **"what did we cover this week?"** → weekly digest
-- **SM-2 spaced repetition** — Clicky reminds you to review topics at optimal intervals (1 → 3 → 7 → 14 → 30 → 60 → 120 days)
+- **SM-2 spaced repetition** — Lashy reminds you to review topics at optimal intervals (1 → 3 → 7 → 14 → 30 → 60 → 120 days)
 - Say **"quiz me on what I should review"** → flashcard session from your journal
-- Journal stored at `%LOCALAPPDATA%\Clicky\journal.db`
+- Journal stored at `%LOCALAPPDATA%\Lashy\journal.db`
 
 ### 📄 Document Context (Drag & Drop)
-- Drag a **PDF, DOCX, TXT, MD, CSV, or code file** onto the Clicky panel
-- Clicky reads it and uses it as context for your next questions
+- Drag a **PDF, DOCX, TXT, MD, CSV, or code file** onto the Lashy panel
+- Lashy reads it and uses it as context for your next questions
 - Or use **Tray → Journal → Attach document…** for a file picker
 - Supports multi-file: attach several docs and ask cross-document questions
 
 ### 🔍 OCR Fallback (Fine Print)
-- When your query mentions "fine print", "small text", "read that", etc., Clicky runs **Tesseract OCR** on the screenshot
+- When your query mentions "fine print", "small text", "read that", etc., Lashy runs **Tesseract OCR** on the screenshot
 - Extracts text too small or low-contrast for the LLM's vision to read
 - Requires the Tesseract binary from [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 - Gracefully skipped if Tesseract isn't installed
@@ -150,7 +151,7 @@ Switch mid-session from the system tray — takes about a second, no restart nee
 | Toggle | What it does |
 |---|---|
 | **Slow Mode** | 1.7× slower bezier flight + longer dwell — easier to follow |
-| **Quiz Mode** | Clicky asks *you* questions instead of answering; evaluates in one sentence |
+| **Quiz Mode** | Lashy asks *you* questions instead of answering; evaluates in one sentence |
 | **Privacy Guard** | Skips the screenshot when a password manager / banking window is detected |
 | **Code Mode (auto)** | Code-specialist prompt when an IDE is active |
 | **Multilingual** | Auto-detects language, replies in kind, switches TTS voice |
@@ -167,10 +168,10 @@ Switch mid-session from the system tray — takes about a second, no restart nee
 - Records the screen at 8 fps as an MP4 alongside a Markdown transcript of all Q&A
 - Start: **Tray → Lesson Recording → Start recording**
 - Stop: tray menu → produces `lesson_YYYY-MM-DD_HH-MM.mp4` + `lesson_YYYY-MM-DD_HH-MM_transcript.md`
-- Saved to `%LOCALAPPDATA%\Clicky\recordings\`
+- Saved to `%LOCALAPPDATA%\Lashy\recordings\`
 
 ### 🖊️ Whiteboard Annotations
-Clicky can draw directly on your screen as it explains:
+Lashy can draw directly on your screen as it explains:
 - `[ARROW:x1,y1->x2,y2]` — animated arrow between two points
 - `[CIRCLE:x,y,r:label]` — pulsing circle with optional label
 - `[UNDERLINE:x,y,w]` — underline beneath text
@@ -181,8 +182,8 @@ Annotations fade out after ~4 seconds and clear automatically on the next query.
 ### 🖱️ Workflow Capture
 - Records your mouse clicks and keystrokes while you work
 - Start: **Tray → Workflow Capture → Start capturing my clicks**
-- Stop: **Tray → Workflow Capture → Stop + send to Clicky**
-- Ask **"What did I just do?"** → Clicky narrates your workflow step-by-step
+- Stop: **Tray → Workflow Capture → Stop + send to Lashy**
+- Ask **"What did I just do?"** → Lashy narrates your workflow step-by-step
 - Requires `pynput` (included in `requirements.txt`)
 
 ### 🎤 Voice Picker
@@ -202,7 +203,7 @@ Detects sensitive windows and skips the screenshot entirely:
 Create your own voice triggers — no pull request needed:
 
 ```python
-# ~/.clicky/skills/my_skill.py
+# ~/.lashy/skills/my_skill.py
 import asyncio
 
 SKILL = {
@@ -218,7 +219,7 @@ async def open_calc(transcript: str, manager) -> str:
     return "Opening calculator for you."
 ```
 
-Place skill files in `~/.clicky/skills/` — Clicky auto-loads them on startup.
+Place skill files in `~/.lashy/skills/` — Lashy auto-loads them on startup.
 
 ---
 
@@ -245,7 +246,7 @@ pip install -r requirements.txt
 **Installed a release build?** You don't need to touch a file — open the tray
 icon → **Setup & Diagnostics → API Keys…**, paste your key, and hit Save. The
 first-run wizard offers the same screen. Keys are written to `.env` next to
-`Clicky.exe` for you.
+`Lashy.exe` for you.
 
 **Running from source?** Create `.env` in the project root (copy from
 `.env.example`):
@@ -275,7 +276,7 @@ LMSTUDIO_HOST=http://localhost:1234/v1
 LMSTUDIO_MODEL=
 
 # ── Customise ──
-CLICKY_HOTKEY=ctrl+win
+LASHY_HOTKEY=ctrl+win
 WHISPERCPP_MODEL=base
 ```
 
@@ -284,13 +285,13 @@ WHISPERCPP_MODEL=base
 Tray → Model → Sign in to GitHub Copilot…
 → visit github.com/login/device → enter the code shown in the terminal
 ```
-Token cached at `%LOCALAPPDATA%\Clicky\github_token.json`. Default model: `gpt-4o-mini` (free tier).
+Token cached at `%LOCALAPPDATA%\Lashy\github_token.json`. Default model: `gpt-4o-mini` (free tier).
 
 ### 5. Run
 ```bash
 python main.py
 ```
-A blue dot appears in your system tray. Clicky is now running.
+A blue dot appears in your system tray. Lashy is now running.
 
 ---
 
@@ -308,7 +309,7 @@ OLLAMA_TEXT_MODEL=qwen2.5-coder:7b
 3. `pip install -r requirements.txt`
 4. `python main.py`
 
-Clicky uses **two Ollama model slots**: a vision model for screen-aware questions (pointing, "what's on screen?") and a text model for Code Mode / journal Q&A. Switch between them anytime from the tray: **Tray → Ollama → Vision model / Text model**.
+Lashy uses **two Ollama model slots**: a vision model for screen-aware questions (pointing, "what's on screen?") and a text model for Code Mode / journal Q&A. Switch between them anytime from the tray: **Tray → Ollama → Vision model / Text model**.
 
 **Recommended free models (Tray → Ollama → Pull recommended…):**
 
@@ -335,14 +336,14 @@ python assets/make_icon.py
 
 # 2. Build
 pip install pyinstaller
-pyinstaller clicky.spec --clean --noconfirm
+pyinstaller lashy.spec --clean --noconfirm
 
 # 3. Distribute
-# → dist/Clicky/  (entire folder)
+# → dist/Lashy/  (entire folder)
 # → or build Setup.exe with Inno Setup using installer.iss
 ```
 
-`dist/Clicky/Clicky.exe` runs on any Windows machine without Python installed. Include a `.env` file next to the exe with your API keys, or set them as system environment variables.
+`dist/Lashy/Lashy.exe` runs on any Windows machine without Python installed. Include a `.env` file next to the exe with your API keys, or set them as system environment variables.
 
 See [BUILD.md](BUILD.md) for full packaging instructions, including the Inno Setup installer.
 
@@ -371,7 +372,9 @@ See [BUILD.md](BUILD.md) for full packaging instructions, including the Inno Set
 
 | Key | Action |
 |---|---|
+| `Ctrl + Win` (tap) | Open / close the chat panel |
 | `Ctrl + Win` (hold) | Push-to-talk |
+| `Ctrl + Alt + C` | Open / close the chat panel |
 | `Esc` | Stop response / TTS immediately |
 
 ### Tray Menu
@@ -507,7 +510,7 @@ clicky-windows/
 │
 ├── .env                         # your API keys (not committed)
 ├── requirements.txt             # all Python dependencies
-├── clicky.spec                  # PyInstaller build spec
+├── lashy.spec                  # PyInstaller build spec
 ├── installer.iss                # Inno Setup installer script
 ├── build.bat                    # one-click build script
 ├── BUILD.md                     # full build + packaging guide
@@ -533,26 +536,26 @@ clicky-windows/
 | `OLLAMA_TEXT_MODEL` | *(empty)* | Ollama model for Code Mode + journal Q&A |
 | `LMSTUDIO_HOST` | `http://localhost:1234/v1` | LM Studio local server URL |
 | `LMSTUDIO_MODEL` | *(empty)* | Force a specific model; empty = whatever's loaded |
-| `CLICKY_HOTKEY` | `ctrl+win` | Global push-to-talk combo |
-| `CLICKY_STT` | *(auto)* | Force STT: `deepgram` / `openai` / `whisper_cpp` / `faster_whisper` |
-| `CLICKY_ACTIVE_LLM` | *(auto)* | Force LLM: `claude` / `openai` / `copilot` / `gemini` / `ollama` / `lmstudio` |
+| `LASHY_HOTKEY` | `ctrl+win` | Global push-to-talk combo |
+| `LASHY_STT` | *(auto)* | Force STT: `deepgram` / `openai` / `whisper_cpp` / `faster_whisper` |
+| `LASHY_ACTIVE_LLM` | *(auto)* | Force LLM: `claude` / `openai` / `copilot` / `gemini` / `ollama` / `lmstudio` |
 | `WHISPER_MODEL` | `base` | Faster-Whisper model (`tiny` / `base` / `small` / `medium`) |
 | `WHISPERCPP_MODEL` | `base` | whisper.cpp model size (avoid `.en` variants for non-English use) |
 | `WHISPER_LANGUAGE` | *(empty)* | Force transcription language (ISO code, e.g. `de`); empty = auto-detect |
-| `RESPONSE_LANGUAGE` | *(empty)* | Force Clicky's reply language regardless of input; empty = auto-detect |
+| `RESPONSE_LANGUAGE` | *(empty)* | Force Lashy's reply language regardless of input; empty = auto-detect |
 | `MIC_DEVICE_INDEX` | *(empty)* | Force a specific input device; empty = system default |
-| `CUSTOM_INSTRUCTIONS` | *(built-in prompt)* | Full override of Clicky's system prompt — also editable live via Tray |
+| `CUSTOM_INSTRUCTIONS` | *(built-in prompt)* | Full override of Lashy's system prompt — also editable live via Tray |
 
 ---
 
 ## Troubleshooting
 
-**Clicky doesn't hear me**
+**Lashy doesn't hear me**
 → Check the default microphone in Windows Sound settings
 → Pick a different mic under **Tray → Setup & Diagnostics → Microphone**
 → Upgrade to Deepgram for better accuracy in noisy rooms
 
-**Clicky mixes languages in its replies**
+**Lashy mixes languages in its replies**
 → Set a fixed reply language: **Tray → Reply language**
 → Make sure `WHISPERCPP_MODEL` / `WHISPER_MODEL` isn't set to an English-only (`.en`) variant
 
@@ -573,7 +576,7 @@ clicky-windows/
 
 **GitHub Copilot auth fails**
 → Re-run: Tray → Model → Sign in to GitHub Copilot…
-→ Check that `%LOCALAPPDATA%\Clicky\github_token.json` exists
+→ Check that `%LOCALAPPDATA%\Lashy\github_token.json` exists
 
 **Esc doesn't stop audio**
 → Make sure `sounddevice` is installed (`pip install sounddevice`)
@@ -595,7 +598,7 @@ clicky-windows/
 
 ## Contributing
 
-Clicky is open to contributors from **anywhere in the world**. Whether you're a student who uses it every day, a developer who wants to add a feature, or someone who speaks a language we haven't supported yet — you're welcome here.
+Lashy is open to contributors from **anywhere in the world**. Whether you're a student who uses it every day, a developer who wants to add a feature, or someone who speaks a language we haven't supported yet — you're welcome here.
 
 ### Ways to contribute
 - 🐛 **Bug reports** — open an [Issue](https://github.com/Bitshank-2338/clicky-windows/issues) with steps to reproduce

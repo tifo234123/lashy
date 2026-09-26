@@ -1,10 +1,10 @@
 """
-Hybrid pointer — Clicky pointing accuracy upgrade.
+Hybrid pointer — Lashy pointing accuracy upgrade.
 
 The original grid-locator was inaccurate because it asked the LLM to guess
 pixel coordinates from a numbered grid overlay. Vision models trained on
 natural images don't have pixel-precise spatial reasoning, so they'd often
-pick a neighboring cell or off-by-one row, sending Clicky's blue cursor to
+pick a neighboring cell or off-by-one row, sending Lashy's blue cursor to
 the wrong button.
 
 This module uses a three-tier resolver, each tier much more accurate than the next:
@@ -36,7 +36,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional, List, Tuple
 
-log = logging.getLogger("clicky.pointer")
+log = logging.getLogger("lashy.pointer")
 
 
 @dataclass
@@ -309,7 +309,7 @@ def find_target(
     >= the tier's threshold. Returns None if all three tiers whiff.
 
     Args:
-        query:        what the user asked Clicky to point at (e.g. "save button",
+        query:        what the user asked Lashy to point at (e.g. "save button",
                       "send icon", "login text field").
         screenshot:   ScreenShot object (from screen.capture) — used by vision tier.
         pil_image:    PIL.Image of the full screen — used by OCR tier. Optional;

@@ -1,4 +1,4 @@
-﻿# Clicky â€” Feature Testing Guide
+﻿# Lashy â€” Feature Testing Guide
 
 How to verify every feature works. Go top-to-bottom; each section is independent.
 
@@ -11,7 +11,7 @@ python main.py
 ```
 
 âœ… Blue dot appears in system tray (bottom-right of taskbar)  
-âœ… `Clicky is running` toast notification appears  
+âœ… `Lashy is running` toast notification appears  
 âœ… Blue triangle overlay floats next to your cursor  
 
 ---
@@ -24,7 +24,7 @@ python main.py
 
 âœ… Overlay waveform animates while you speak  
 âœ… Overlay switches to "thinking" spinner  
-âœ… Clicky describes the current page/app  
+âœ… Lashy describes the current page/app  
 âœ… TTS speaks the answer  
 
 ---
@@ -32,10 +32,10 @@ python main.py
 ## 2. Wake Word
 
 1. Do NOT press any hotkey
-2. Say **"Clicky"** then immediately *"what time is it?"*
+2. Say **"Lashy"** then immediately *"what time is it?"*
 
-âœ… Blue buddy reacts after you say "Clicky"  
-âœ… Clicky answers the question  
+âœ… Blue buddy reacts after you say "Lashy"  
+âœ… Lashy answers the question  
 
 ---
 
@@ -60,7 +60,7 @@ python main.py
 âœ… Blue buddy flies via bezier arc to the search bar  
 âœ… Pulsing highlight ring appears around it  
 âœ… Speech bubble shows "search bar"  
-âœ… Clicky says *"That's the Google search bar"* (or similar)  
+âœ… Lashy says *"That's the Google search bar"* (or similar)  
 âœ… Buddy returns to cursor after TTS ends  
 
 **Also test:**
@@ -86,7 +86,7 @@ python main.py
 1. Open a video in VLC or any video player
 2. Ask *"how do I take a screenshot in Windows?"*
 
-âœ… Clicky gives Step 1, ends with *"say 'next' when ready"*  
+âœ… Lashy gives Step 1, ends with *"say 'next' when ready"*  
 3. Say **"next"**  
 âœ… Step 2 delivered without a new LLM call  
 4. Continue until done  
@@ -99,7 +99,7 @@ python main.py
 2. Wait for it to finish speaking
 3. Say **"repeat"** or **"say that again"**
 
-âœ… Clicky replays the last TTS without querying the LLM again  
+âœ… Lashy replays the last TTS without querying the LLM again  
 
 ---
 
@@ -120,7 +120,7 @@ python main.py
 âœ… Toast: *"Switched to openai"*  
 âœ… Panel badge changes to GPT-4o  
 âœ… Model dropdown repopulates with OpenAI models  
-âœ… Clicky answers using the new provider  
+âœ… Lashy answers using the new provider  
 
 3. Switch back to Claude  
 
@@ -163,11 +163,11 @@ python main.py
 
 1. Show Panel (tray â†’ Show Panel)
 2. Find any PDF or DOCX file in Explorer
-3. Drag it onto the Clicky panel
+3. Drag it onto the Lashy panel
 
 âœ… Toast: *"Document Attached"*  
 4. Ask *"summarise what's in the document I just gave you"*  
-âœ… Clicky summarises the file contents  
+âœ… Lashy summarises the file contents  
 
 **Alternative:** Tray â†’ Journal â†’ Attach documentâ€¦ â†’ pick a file  
 
@@ -175,17 +175,17 @@ python main.py
 
 ## 13. Knowledge Journal
 
-1. Have a 3â€“4 question conversation with Clicky
+1. Have a 3â€“4 question conversation with Lashy
 2. Say *"what did we cover today?"*
 
-âœ… Clicky summarises today's Q&A from the local journal  
+âœ… Lashy summarises today's Q&A from the local journal  
 
 3. Say *"what did we cover this week?"*  
 âœ… Weekly digest  
 
 **Check the database:**
 ```
-%LOCALAPPDATA%\Clicky\journal.db
+%LOCALAPPDATA%\Lashy\journal.db
 ```
 
 ---
@@ -196,8 +196,8 @@ python main.py
 2. Tray â†’ **Tutor Mode â†’ Quiz Mode: OFF** â†’ turns ON
 3. Hold **Ctrl + Win**, say *"quiz me"*
 
-âœ… Clicky asks YOU a question about what's on screen  
-âœ… Answer it â€” Clicky evaluates in one sentence  
+âœ… Lashy asks YOU a question about what's on screen  
+âœ… Answer it â€” Lashy evaluates in one sentence  
 âœ… Next question follows automatically  
 
 4. Turn Quiz Mode OFF  
@@ -220,7 +220,7 @@ python main.py
 1. Tray â†’ **Tutor Mode â†’ Multilingual: ON**
 2. Ask a question in Hindi: *"à¤®à¥‡à¤°à¥€ à¤¸à¥à¤•à¥à¤°à¥€à¤¨ à¤ªà¤° à¤•à¥à¤¯à¤¾ à¤¹à¥ˆ?"*
 
-âœ… Clicky detects Hindi  
+âœ… Lashy detects Hindi  
 âœ… Responds in Hindi  
 âœ… TTS voice switches to a Hindi voice  
 
@@ -236,14 +236,14 @@ python main.py
 1. Open a page with small/dense text (e.g., a legal document, footnotes)
 2. Ask *"read the fine print"* or *"what does the small text say?"*
 
-âœ… Clicky runs OCR on the screenshot  
+âœ… Lashy runs OCR on the screenshot  
 âœ… Extracts text the vision model might have missed  
 
 ---
 
 ## 18. Whiteboard Annotations
 
-1. Ask a question where Clicky would point at multiple things, e.g.:
+1. Ask a question where Lashy would point at multiple things, e.g.:
    *"show me where the menu bar and the address bar are"*
 
 âœ… Arrows or circles drawn on screen  
@@ -261,7 +261,7 @@ python main.py
 3. Tray â†’ **Lesson Recording â†’ Stop recording**  
 
 âœ… Toast: *"Lesson saved"*  
-4. Open `%LOCALAPPDATA%\Clicky\recordings\`  
+4. Open `%LOCALAPPDATA%\Lashy\recordings\`  
 âœ… MP4 file exists  
 âœ… `_transcript.md` file exists with all Q&A  
 
@@ -274,10 +274,10 @@ python main.py
 âœ… Toast: *"Recording your clicks + keysâ€¦"*  
 
 2. Do 5â€“10 actions: click around, type something, switch tabs
-3. Tray â†’ **Workflow Capture â†’ Stop + send to Clicky**
+3. Tray â†’ **Workflow Capture â†’ Stop + send to Lashy**
 4. Ask *"what did I just do?"*
 
-âœ… Clicky narrates your workflow step by step  
+âœ… Lashy narrates your workflow step by step  
 
 ---
 
@@ -285,28 +285,28 @@ python main.py
 
 1. Tray â†’ **Tutor Mode â†’ Privacy Guard: ON** (should be on by default)
 2. Open KeePass, Bitwarden, or any app with "login" / "password" in the title
-3. Ask Clicky anything
+3. Ask Lashy anything
 
-âœ… Clicky says it skipped the screenshot for privacy  
+âœ… Lashy says it skipped the screenshot for privacy  
 âœ… No screenshot taken of your password manager  
 
 ---
 
 ## 22. Per-App Memory
 
-1. Ask Clicky something in Chrome: *"what's on screen?"*
+1. Ask Lashy something in Chrome: *"what's on screen?"*
 2. Switch to VS Code
 3. Ask: *"what were we just talking about?"*
 
-âœ… Clicky has separate context â€” it won't mention the Chrome content  
+âœ… Lashy has separate context â€” it won't mention the Chrome content  
 âœ… Each app has its own conversation history  
 
 ---
 
 ## 23. Skills System
 
-1. Copy `skills/example_self_mode.py` to `~/.clicky/skills/my_skill.py`
-2. Restart Clicky
+1. Copy `skills/example_self_mode.py` to `~/.lashy/skills/my_skill.py`
+2. Restart Lashy
 3. Say the trigger phrase from the skill
 
 âœ… Skill fires its custom handler  
@@ -329,7 +329,7 @@ python main.py
 
 1. Tray â†’ **Journal â†’ Open journal folder**
 
-âœ… Explorer opens `%LOCALAPPDATA%\Clicky\`  
+âœ… Explorer opens `%LOCALAPPDATA%\Lashy\`  
 âœ… You can see `journal.db` and recordings  
 
 ---
@@ -342,13 +342,13 @@ Run this sequence to verify core features fast:
 1. python main.py                    â†’ tray icon appears
 2. Hold hotkey â†’ "what's on screen?" â†’ answer spoken
 3. Esc during response               â†’ stops immediately
-4. Say "Clicky, where is [element]"  â†’ buddy flies to it
+4. Say "Lashy, where is [element]"  â†’ buddy flies to it
 5. Tray â†’ Quiz Mode ON â†’ "quiz me"   â†’ quiz starts
 6. Tray â†’ Quiz Mode OFF
 7. Drag a PDF onto panel             â†’ toast confirms attach
 8. Ask "summarise the document"      â†’ summary spoken
 9. Say "what did we cover today?"    â†’ journal summary
-10. Tray â†’ Quit Clicky               â†’ clean exit
+10. Tray â†’ Quit Lashy               â†’ clean exit
 ```
 
-All 10 steps passing = Clicky is fully functional.
+All 10 steps passing = Lashy is fully functional.

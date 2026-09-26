@@ -3,7 +3,7 @@ API Keys dialog.
 
 Packaged installs had no way to enter an API key — config only ever read
 .env, so a user who wanted Claude/OpenAI/Gemini had to find the install
-folder and hand-edit a file next to Clicky.exe. This dialog is that missing
+folder and hand-edit a file next to Lashy.exe. This dialog is that missing
 surface: paste a key, hit Save, and it applies immediately and persists.
 
 Reachable from Tray → Setup & Diagnostics → API Keys…, and from the
@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QScrollArea, QWidget, QFrame, QCheckBox,
 )
 
-from config import cfg
+from config import cfg, env_get
 
 
 # env var → (label, where to get one, what it unlocks)
@@ -31,7 +31,7 @@ PROVIDERS = [
      "Best answers and screen understanding."),
     ("OPENAI_API_KEY",     "OpenAI — GPT",
      "https://platform.openai.com/api-keys",
-     "Also upgrades speech-to-text and Clicky's voice."),
+     "Also upgrades speech-to-text and Lashy's voice."),
     ("GOOGLE_API_KEY",     "Google — Gemini",
      "https://aistudio.google.com/app/apikey",
      "Generous free tier."),
@@ -46,7 +46,7 @@ PROVIDERS = [
      "Better search results than the free DuckDuckGo fallback."),
 ]
 
-# Adding one of these keys should also make Clicky start using that provider.
+# Adding one of these keys should also make Lashy start using that provider.
 LLM_PROVIDER_FOR_KEY = {
     "ANTHROPIC_API_KEY": "claude",
     "OPENAI_API_KEY":    "openai",
@@ -95,7 +95,7 @@ class ApiKeysDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Clicky — API Keys")
+        self.setWindowTitle("Lashy — API Keys")
         self.setModal(False)
         self.setMinimumSize(560, 560)
         self.setStyleSheet(STYLE)
@@ -115,7 +115,7 @@ class ApiKeysDialog(QDialog):
         root.addWidget(title)
 
         subtitle = QLabel(
-            "Clicky works with no keys at all using Ollama. Add a key here "
+            "Lashy works with no keys at all using Ollama. Add a key here "
             "only if you want a cloud model instead — every field is optional."
         )
         subtitle.setObjectName("subtitle")
@@ -224,14 +224,14 @@ class ApiKeysDialog(QDialog):
             self._status.setText("No changes.")
             return
 
-        # A provider pinned earlier (tray switch writes CLICKY_ACTIVE_LLM)
+        # A provider pinned earlier (tray switch writes LASHY_ACTIVE_LLM)
         # outranks the key-priority chain. Without these two adjustments,
         # pasting a key while pinned to Ollama silently changes nothing, and
-        # deleting the pinned provider's key leaves Clicky pointed at a
+        # deleting the pinned provider's key leaves Lashy pointed at a
         # provider that can no longer answer.
         if newly_added_llm:
             cfg.set_active_llm(newly_added_llm[0])
-        elif (pinned := os.environ.get("CLICKY_ACTIVE_LLM", "").strip().lower()):
+        elif (pinned := env_get("ACTIVE_LLM", "").strip().lower()):
             if pinned not in cfg.available_llm_providers():
                 cfg.clear_active_llm()
 

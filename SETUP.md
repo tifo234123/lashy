@@ -1,4 +1,4 @@
-﻿# Clicky for Windows â€” Setup Guide
+﻿# Lashy â€” Setup Guide
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ python main.py
 ```
 
 A floating panel appears in the bottom-right corner.
-The Clicky icon appears in your system tray.
+The Lashy icon appears in your system tray.
 
 **Hold `Ctrl+Win`** to speak. Release to send.
 

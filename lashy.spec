@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec for Clicky Windows.
+PyInstaller spec for Lashy Windows.
 
 Build:
-    pyinstaller clicky.spec --clean --noconfirm
+    pyinstaller lashy.spec --clean --noconfirm
 
 Output:
-    dist/Clicky/Clicky.exe           ← distribute this whole folder
+    dist/Lashy/Lashy.exe           ← distribute this whole folder
 
 We use --onedir (not --onefile) because:
   • faster-whisper + ctranslate2 ship large native DLLs that onefile
@@ -109,7 +109,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    # Shave size: Clicky never uses these heavy libs.
+    # Shave size: Lashy never uses these heavy libs.
     excludes=[
         "matplotlib", "scipy", "pandas", "tkinter",
         "notebook", "jupyter", "IPython",
@@ -125,7 +125,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="Clicky",
+    name="Lashy",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -146,5 +146,5 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="Clicky",
+    name="Lashy",
 )

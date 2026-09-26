@@ -1,5 +1,5 @@
 """
-Real-time web search for Clicky — tutor-grade grounding layer.
+Real-time web search for Lashy — tutor-grade grounding layer.
 
 Strategy (free path, no API key required):
   1. Expand the user's question into 1-2 focused sub-queries.
@@ -146,7 +146,7 @@ _STOPWORDS = {
     "what", "whats", "what's", "how", "why", "when", "where", "who",
     "is", "are", "the", "a", "an", "of", "on", "in", "to", "for",
     "do", "does", "i", "you", "me", "this", "that", "please", "tell",
-    "explain", "clicky", "hey",
+    "explain", "lashy", "hey",
 }
 
 
