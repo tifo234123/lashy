@@ -9,9 +9,31 @@ Lashy is a Windows port of [farzaa/clicky](https://github.com/farzaa/clicky) (or
 
 ## Hi, this is Lashy 👋
 
-[![Watch the demo](assets/lashy-demo.gif)](https://youtu.be/WYY9yJHDaEU)
+## 🎥 Demo videos
 
-> 🎬 **[Watch full demo on YouTube →](https://youtu.be/WYY9yJHDaEU)**
+- [Quick demo](assets/demos/Lashy_Quick_Demo.mp4) — Lashy pointing and answering in under a minute
+- [Full UNICAS demo](assets/demos/Lashy_Demo_UNICAS.mp4) — longer walkthrough recorded for Università degli Studi di Cassino e del Lazio Meridionale
+
+## ▶️ How to run it
+
+```bash
+git clone https://github.com/tifo234123/lashy.git
+cd lashy
+
+# Student / free version — no API keys needed, runs on Ollama
+pip install -r requirements-student.txt
+
+# or the full version with all providers
+pip install -r requirements.txt
+
+copy .env.example .env
+# open .env and add any API keys you have — everything is optional,
+# Ollama is the free local fallback
+
+python main.py
+```
+
+A floating panel appears bottom-right and the tray icon shows up. **Hold `Ctrl+Win`** and speak — release to send. Full setup details (PyAudio on Windows, provider priority, etc.) are in [SETUP.md](SETUP.md).
 
 Lashy is a little AI buddy that **lives next to your cursor**. Hold a hotkey, ask it something about your screen, and it talks back — pointing at buttons, walking you through steps, drawing arrows on your screen. Think of it as a patient tutor sitting beside you while you learn anything: video editing, coding, a new app, whatever.
 
