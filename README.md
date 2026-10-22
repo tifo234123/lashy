@@ -9,17 +9,14 @@ Lashy is a Windows port of [farzaa/clicky](https://github.com/farzaa/clicky) (or
 
 ## Hi, this is Lashy 👋
 
-## 🎥 Demo videos
+## 🎥 Demo
 
-**Full UNICAS demo** — recorded for Università degli Studi di Cassino e del Lazio Meridionale:
+![Lashy demo](assets/demos/lashy-demo.gif)
 
-https://github.com/tifo234123/lashy/raw/main/assets/demos/Lashy_Demo_UNICAS.mp4
+**Full-quality videos** (click to open the inline player):
 
-**Quick demo** — Lashy pointing and answering in under a minute:
-
-https://github.com/tifo234123/lashy/raw/main/assets/demos/Lashy_Quick_Demo.mp4
-
-> If a video shows as a download link instead of a player, click it — GitHub opens it in an inline player.
+- ▶️ [Full UNICAS demo](https://github.com/tifo234123/lashy/raw/main/assets/demos/Lashy_Demo_UNICAS.mp4) — recorded for Università degli Studi di Cassino e del Lazio Meridionale
+- ▶️ [Quick demo](https://github.com/tifo234123/lashy/raw/main/assets/demos/Lashy_Quick_Demo.mp4) — Lashy pointing and answering in under a minute
 
 ## ▶️ How to run it
 
